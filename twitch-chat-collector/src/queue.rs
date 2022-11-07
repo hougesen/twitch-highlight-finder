@@ -1,5 +1,6 @@
-/// Temporary queue data structure implementation
-/// Probably gonna switch to a VecDeque instead
+/// Temporary queue data structure implementation.
+/// Probably gonna switch to a VecDeque instead.
+
 pub struct Queue<T>(Vec<T>);
 
 impl<T> Queue<T> {
@@ -29,5 +30,18 @@ impl<T> Queue<T> {
         }
 
         None
+    }
+
+    pub fn dequeue_all(&mut self) -> Vec<T> {
+        let mut items: Vec<T> = vec![];
+        println!("Queue length before: {}", self.size());
+
+        while !self.0.is_empty() {
+            items.push(self.0.remove(self.0.len() - 1));
+        }
+
+        println!("Queue length after: {}", self.size());
+
+        items
     }
 }

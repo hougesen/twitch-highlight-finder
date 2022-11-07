@@ -1,10 +1,16 @@
-use crate::queue::Queue;
-
-use std::net::TcpStream;
+use std::{
+    net::TcpStream,
+    sync::{Arc, Mutex},
+};
 use tungstenite::{connect, stream::MaybeTlsStream, Message, WebSocket};
 use url::Url;
 
-pub fn socket_thread(mut channel_join_queue: Queue<String>) -> Result<(), tungstenite::Error> {
+use crate::queue::Queue;
+
+pub fn socket_thread(
+    mut channel_join_queue: Queue<String>,
+    message_queue: Arc<Mutex<Queue<(Message, u64)>>>,
+) -> Result<(), tungstenite::Error> {
     let (mut socket, _response) =
         connect(Url::parse("wss://irc-ws.chat.twitch.tv:443").unwrap()).expect("Can't connect");
 
@@ -21,14 +27,16 @@ pub fn socket_thread(mut channel_join_queue: Queue<String>) -> Result<(), tungst
             }
         }
 
-        let message = socket
-            .read_message()
-            .expect("Error reading message")
-            .to_text()
-            .unwrap()
-            .to_owned();
+        if let Ok(message) = socket.read_message() {
+            let timestamp = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs();
 
-        println!("Received: {}", message);
+            if message.is_text() {
+                message_queue.lock().unwrap().enqueue((message, timestamp));
+            }
+        }
     }
 }
 
