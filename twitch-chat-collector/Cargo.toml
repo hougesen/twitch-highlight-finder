@@ -1,9 +1,12 @@
 [package]
 name = "twitch-chat-collector"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
 description = "System for collecting Twitch chat messages"
 repository = "https://github.com/hougesen/twitch-chat-sentiment-analysis"
 authors = ["Mads Hougesen <mads@mhouge.dk>"]
 
 [dependencies]
+dotenv = "0.15.0"
+tungstenite = { version = "0.17.3", features = ["native-tls"] }
+url = "2.3.1"
