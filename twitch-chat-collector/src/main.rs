@@ -10,6 +10,8 @@ mod chat;
 mod parser;
 mod queue;
 
+type ArcRcMessageQueue = Arc<Mutex<Queue<Vec<(Message, u64)>>>>;
+
 fn main() -> Result<(), tungstenite::Error> {
     println!("Starting Twitch Chat Collector");
 
@@ -17,7 +19,7 @@ fn main() -> Result<(), tungstenite::Error> {
 
     let channel_join_queue = Queue::from(vec!["esl_csgo".to_string(), "esl_csgo2".to_string()]);
 
-    let message_queue: Arc<Mutex<Queue<(Message, u64)>>> = Arc::new(Mutex::new(Queue::new()));
+    let message_queue: ArcRcMessageQueue = Arc::new(Mutex::new(Queue::new()));
 
     let message_queue_clone = Arc::clone(&message_queue);
 

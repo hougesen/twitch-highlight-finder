@@ -1,7 +1,6 @@
-use std::sync::{Arc, Mutex};
 use tungstenite::Message;
 
-use crate::queue::Queue;
+use crate::ArcRcMessageQueue;
 
 #[derive(serde::Serialize)]
 struct TwitchChatMessage {
@@ -11,24 +10,26 @@ struct TwitchChatMessage {
     timestamp: u64,
 }
 
-pub fn message_parser_thread(message_queue: Arc<Mutex<Queue<(Message, u64)>>>) {
+pub fn message_parser_thread(message_queue: ArcRcMessageQueue) {
     loop {
         // Artificial delay so we don't end up blocking the socket_thread
         std::thread::sleep(std::time::Duration::from_secs(30));
 
         let mut message_queue_lock = message_queue.lock().unwrap();
 
-        let messages = message_queue_lock.dequeue_all();
+        let message_buckets = message_queue_lock.dequeue_all();
 
         // Drop lock so we don't block socket_thread
         drop(message_queue_lock);
 
-        if !messages.is_empty() {
+        if !message_buckets.is_empty() {
             let mut parsed_messages: Vec<TwitchChatMessage> = vec![];
 
-            for (message, timestamp) in messages {
-                if let Some(parsed_message) = parse_message(message, timestamp) {
-                    parsed_messages.push(parsed_message);
+            for bucket in message_buckets {
+                for (message, timestamp) in bucket {
+                    if let Some(parsed_message) = parse_message(message, timestamp) {
+                        parsed_messages.push(parsed_message);
+                    }
                 }
             }
 
