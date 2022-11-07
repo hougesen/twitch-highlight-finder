@@ -32,15 +32,13 @@ impl<T> Queue<T> {
         None
     }
 
+    /// TODO: figure out a way to move data that isn't O(n)
     pub fn dequeue_all(&mut self) -> Vec<T> {
-        let mut items: Vec<T> = vec![];
-        println!("Queue length before: {}", self.size());
+        let mut items: Vec<T> = Vec::with_capacity(self.size());
 
         while !self.0.is_empty() {
             items.push(self.0.remove(self.0.len() - 1));
         }
-
-        println!("Queue length after: {}", self.size());
 
         items
     }

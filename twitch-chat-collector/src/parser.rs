@@ -39,7 +39,7 @@ pub fn message_parser_thread(message_queue: Arc<Mutex<Queue<(Message, u64)>>>) {
 
 /// :caveaio!caveaio@caveaio.tmi.twitch.tv PRIVMSG #hougesen :test
 fn parse_message(socket_message: Message, timestamp: u64) -> Option<TwitchChatMessage> {
-    let msg = socket_message.into_text().unwrap().to_string();
+    let msg = socket_message.into_text().unwrap();
 
     if msg.contains("PRIVMSG") {
         let (sender, message) = msg.split_once('!').unwrap();
@@ -62,8 +62,6 @@ fn parse_message(socket_message: Message, timestamp: u64) -> Option<TwitchChatMe
 }
 
 fn save_messages(messages: Vec<TwitchChatMessage>) -> Result<(), Box<dyn std::error::Error>> {
-    println!("save_messages.len {}", &messages.len());
-
     let timestamp = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .unwrap()

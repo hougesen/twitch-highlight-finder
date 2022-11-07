@@ -48,7 +48,7 @@ fn login_to_twitch(
 
     socket.write_message(Message::Text(format!("PASS oauth:{}", &client_token)))?;
 
-    socket.write_message(Message::Text(format!("NICK {}", &client_username)).into())?;
+    socket.write_message(Message::Text(format!("NICK {}", &client_username)))?;
 
     Ok(())
 }
