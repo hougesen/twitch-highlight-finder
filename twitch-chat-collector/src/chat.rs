@@ -29,10 +29,6 @@ pub fn socket_thread(mut channel_join_queue: Queue<String>) -> Result<(), tungst
             .to_owned();
 
         println!("Received: {}", message);
-
-        if message.contains("PING") {
-            socket.write_message(Message::Text(String::from("PONG")));
-        }
     }
 }
 
