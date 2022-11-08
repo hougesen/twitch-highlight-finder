@@ -17,8 +17,7 @@ pub fn message_parser_thread(message_rx: Receiver<(Message, u64)>) {
             parsed_messages.push(parsed_message);
         }
 
-        if parsed_messages.len() > 100 {
-            save_messages(&parsed_messages).ok();
+        if parsed_messages.len() > 100 && save_messages(&parsed_messages).is_ok() {
             parsed_messages = vec![];
         }
     });
