@@ -1,6 +1,8 @@
 use crossbeam_channel::Receiver;
 use tungstenite::Message;
 
+use crate::db::get_db_client;
+
 #[derive(serde::Serialize)]
 struct TwitchChatMessage {
     channel: String,
@@ -12,12 +14,18 @@ struct TwitchChatMessage {
 pub fn message_parser_thread(message_rx: Receiver<(Message, u64)>) {
     let mut parsed_messages: Vec<TwitchChatMessage> = vec![];
 
+    let db = get_db_client();
+
+    let collection = db.collection::<TwitchChatMessage>("twitch_messages");
+
     message_rx.iter().for_each(|(m, t)| {
         if let Some(parsed_message) = parse_message(m, t) {
             parsed_messages.push(parsed_message);
         }
 
-        if parsed_messages.len() > 100 && save_messages(&parsed_messages).is_ok() {
+        if parsed_messages.len() > 100 {
+            collection.insert_many(&parsed_messages, None).ok();
+
             parsed_messages = vec![];
         }
     });
@@ -29,10 +37,10 @@ pub fn message_parser_thread(message_rx: Receiver<(Message, u64)>) {
 fn parse_message(socket_message: Message, timestamp: u64) -> Option<TwitchChatMessage> {
     let msg = socket_message.into_text().unwrap();
 
-    println!("message: {msg}");
+    println!("message: {}", msg.trim());
 
     if msg.contains("PRIVMSG") {
-        let (sender, message) = msg.split_once('!').unwrap();
+        let (sender, message) = msg.trim().split_once('!').unwrap();
 
         let sender = sender.replace(':', "");
 
@@ -42,26 +50,11 @@ fn parse_message(socket_message: Message, timestamp: u64) -> Option<TwitchChatMe
 
         return Some(TwitchChatMessage {
             channel: channel.trim().to_lowercase(),
-            sender,
+            sender: sender.trim().to_lowercase(),
             timestamp,
             message: chat_message.trim().to_string(),
         });
     }
 
     None
-}
-
-fn save_messages(messages: &Vec<TwitchChatMessage>) -> Result<(), Box<dyn std::error::Error>> {
-    println!("Saving messages: {}", messages.len());
-
-    let timestamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
-
-    let json = serde_json::to_string(messages).unwrap();
-
-    std::fs::write(format!("../dataset/messages_{timestamp}.json"), json)?;
-
-    Ok(())
 }

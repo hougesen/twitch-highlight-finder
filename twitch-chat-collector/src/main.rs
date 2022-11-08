@@ -1,11 +1,13 @@
-use chat::socket_thread;
 use crossbeam_channel::unbounded;
 use dotenv::dotenv;
-use parser::message_parser_thread;
-use queue::Queue;
 use tungstenite::Message;
 
+use crate::chat::socket_thread;
+use crate::parser::message_parser_thread;
+use crate::queue::Queue;
+
 mod chat;
+mod db;
 mod parser;
 mod queue;
 

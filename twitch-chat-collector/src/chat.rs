@@ -1,15 +1,18 @@
-use crate::queue::Queue;
-use crossbeam_channel::Sender;
 use std::net::TcpStream;
-use tungstenite::{connect, stream::MaybeTlsStream, Message, WebSocket};
+
+use crossbeam_channel::Sender;
+use tungstenite::{stream::MaybeTlsStream, Message, WebSocket};
 use url::Url;
+
+use crate::queue::Queue;
 
 pub fn socket_thread(
     mut channel_join_queue: Queue<Message>,
     message_tx: Sender<(Message, u64)>,
 ) -> Result<(), tungstenite::Error> {
     let (mut socket, _response) =
-        connect(Url::parse("wss://irc-ws.chat.twitch.tv:443").unwrap()).expect("Can't connect");
+        tungstenite::connect(Url::parse("wss://irc-ws.chat.twitch.tv:443").unwrap())
+            .expect("Can't connect");
 
     login_to_twitch(&mut socket)?;
 
