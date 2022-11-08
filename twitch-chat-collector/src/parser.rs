@@ -1,4 +1,4 @@
-use std::sync::mpsc::Receiver;
+use crossbeam_channel::Receiver;
 use tungstenite::Message;
 
 #[derive(serde::Serialize)]
@@ -21,6 +21,8 @@ pub fn message_parser_thread(message_rx: Receiver<(Message, u64)>) {
             parsed_messages = vec![];
         }
     });
+
+    eprintln!("Somehow out of message_parser_thread?")
 }
 
 /// :caveaio!caveaio@caveaio.tmi.twitch.tv PRIVMSG #hougesen :test

@@ -1,6 +1,6 @@
 use crate::queue::Queue;
+use crossbeam_channel::Sender;
 use std::net::TcpStream;
-use std::sync::mpsc::Sender;
 use tungstenite::{connect, stream::MaybeTlsStream, Message, WebSocket};
 use url::Url;
 
