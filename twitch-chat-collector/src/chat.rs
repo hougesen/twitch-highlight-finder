@@ -1,32 +1,29 @@
+use crate::queue::Queue;
 use std::net::TcpStream;
+use std::sync::mpsc::Sender;
 use tungstenite::{connect, stream::MaybeTlsStream, Message, WebSocket};
 use url::Url;
 
-use crate::{queue::Queue, ArcRcMessageQueue};
-
 pub fn socket_thread(
-    mut channel_join_queue: Queue<String>,
-    message_queue: ArcRcMessageQueue,
+    mut channel_join_queue: Queue<Message>,
+    message_tx: Sender<(Message, u64)>,
 ) -> Result<(), tungstenite::Error> {
     let (mut socket, _response) =
         connect(Url::parse("wss://irc-ws.chat.twitch.tv:443").unwrap()).expect("Can't connect");
 
     login_to_twitch(&mut socket)?;
 
-    let mut unqueued_messages: Vec<(Message, u64)> = vec![];
-
-    loop {
-        if !channel_join_queue.is_empty() {
-            while !channel_join_queue.is_empty() {
-                if let Some(channel) = channel_join_queue.dequeue() {
-                    socket.write_message(Message::Text(format!(
-                        "JOIN #{}",
-                        &channel.trim().to_lowercase()
-                    )))?;
-                }
+    if !channel_join_queue.is_empty() {
+        while !channel_join_queue.is_empty() {
+            if let Some(channel) = channel_join_queue.dequeue() {
+                socket.write_message(channel)?;
             }
         }
+    }
 
+    socket.write_pending().ok();
+
+    loop {
         if let Ok(message) = socket.read_message() {
             let timestamp = std::time::SystemTime::now()
                 .duration_since(std::time::UNIX_EPOCH)
@@ -34,18 +31,8 @@ pub fn socket_thread(
                 .as_secs();
 
             if message.is_text() {
-                unqueued_messages.push((message, timestamp));
+                message_tx.send((message, timestamp)).ok();
             }
-        }
-
-        if unqueued_messages.len() > 1000 {
-            let mut message_queue_lock = message_queue.lock().unwrap();
-
-            message_queue_lock.enqueue(unqueued_messages);
-
-            drop(message_queue_lock);
-
-            unqueued_messages = vec![];
         }
     }
 }
@@ -59,6 +46,6 @@ fn login_to_twitch(
     socket.write_message(Message::Text(format!("PASS oauth:{}", &client_token)))?;
 
     socket.write_message(Message::Text(format!("NICK {}", &client_username)))?;
-
+    println!("Sent login ");
     Ok(())
 }
