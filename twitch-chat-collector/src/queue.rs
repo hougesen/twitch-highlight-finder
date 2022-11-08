@@ -1,6 +1,5 @@
 /// Temporary queue data structure implementation.
 /// Probably gonna switch to a VecDeque instead.
-
 pub struct Queue<T>(Vec<T>);
 
 impl<T> Queue<T> {
