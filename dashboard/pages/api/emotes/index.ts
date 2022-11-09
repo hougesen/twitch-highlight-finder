@@ -5,8 +5,8 @@ import type { IEmote } from '../../../types/models';
 async function fetchEmotes(): Promise<IEmote[]> {
     const db = await getDbClient();
 
-    const emotes = await db.collection('twitch_emotes').find({}).toArray();
-
+    const emotes = await db.collection('emotes').find({}).toArray();
+    console.log('motes', emotes);
     return emotes as IEmote[];
 }
 
