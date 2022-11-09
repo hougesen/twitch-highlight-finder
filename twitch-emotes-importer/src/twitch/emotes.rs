@@ -19,7 +19,7 @@ pub struct TwitchEmote {
 
 pub async fn fetch_global_emotes(
     http_client: &reqwest::Client,
-) -> Result<Vec<TwitchEmote>, Box<dyn std::error::Error>> {
+) -> Result<Vec<TwitchEmote>, reqwest::Error> {
     let url = "https://api.twitch.tv/helix/chat/emotes/global";
 
     let response = http_client.get(url).send().await?;
@@ -44,11 +44,8 @@ pub async fn fetch_global_emotes(
 pub async fn fetch_channel_emotes(
     channel_id: String,
     http_client: &reqwest::Client,
-) -> Result<Vec<TwitchEmote>, Box<dyn std::error::Error>> {
-    let url = format!(
-        "https://api.twitch.tv/helix/chat/emotes?broadcaster_id={}",
-        &channel_id
-    );
+) -> Result<Vec<TwitchEmote>, reqwest::Error> {
+    let url = format!("https://api.twitch.tv/helix/chat/emotes?broadcaster_id={channel_id}");
 
     let response = http_client.get(url).send().await?;
 
