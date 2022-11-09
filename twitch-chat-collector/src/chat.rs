@@ -34,7 +34,7 @@ pub fn socket_thread(
                 .as_secs();
 
             if message.is_text() {
-                message_tx.send((message, timestamp)).ok();
+                message_tx.try_send((message, timestamp));
             }
         }
     }
