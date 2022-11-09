@@ -1,5 +1,5 @@
 [package]
-name = "twitch-emotes-importer"
+name = "twitch-emote-importer"
 version = "0.0.1"
 edition = "2021"
 description = "System for fetching Twitch emotes"

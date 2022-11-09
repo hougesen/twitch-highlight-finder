@@ -1,3 +1,3 @@
-# twitch-emotes-importer
+# twitch-emote-importer
 
 System for extracting emotes from Twitch channels.
