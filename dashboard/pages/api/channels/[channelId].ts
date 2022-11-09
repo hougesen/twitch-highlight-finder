@@ -2,7 +2,7 @@ import { ObjectId } from 'mongodb';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { MissingFieldError } from '../../../lib/errors';
 import getDbClient from '../../../lib/mongodb';
-import { IChannel } from '../../../types/channel';
+import { IChannel } from '../../../types/models';
 
 async function getChannelById(channelId: string): Promise<IChannel | null> {
     const db = await getDbClient();
