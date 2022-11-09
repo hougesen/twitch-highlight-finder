@@ -12,11 +12,15 @@ async function getEmoteById(emoteId: string): Promise<IEmote | null> {
     return emote as IEmote | null;
 }
 
-async function updateEmoteById(emoteId: string, emoteScore: number): Promise<IEmote | null> {
+async function updateEmoteById(emoteId: string, score: number): Promise<IEmote | null> {
+    if (typeof score !== 'number') {
+        throw new MissingFieldError('score');
+    }
+
     const db = await getDbClient();
 
     const updatedEmote = {
-        score: emoteScore ?? null,
+        score,
     };
 
     const emote = await db.collection('twitch_emotes').findOneAndUpdate(
