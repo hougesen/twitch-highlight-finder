@@ -11,7 +11,7 @@ struct TwitchGetEmotesResponse {
 
 #[derive(Debug, serde::Serialize)]
 pub struct TwitchEmote {
-    pub id: String,
+    pub emote_id: String,
     /// The name of the emote. This is the name that viewers type in the chat window to get the emote to appear.
     pub name: String,
     pub channel_id: Option<String>,
@@ -30,7 +30,7 @@ pub async fn fetch_global_emotes(
         if !parsed_response.data.is_empty() {
             for emote in parsed_response.data {
                 emotes.push(TwitchEmote {
-                    id: emote.id,
+                    emote_id: emote.id,
                     name: emote.name,
                     channel_id: None,
                 })
@@ -58,7 +58,7 @@ pub async fn fetch_channel_emotes(
         if !parsed_response.data.is_empty() {
             for emote in parsed_response.data {
                 emotes.push(TwitchEmote {
-                    id: emote.id,
+                    emote_id: emote.id,
                     name: emote.name,
                     channel_id: Some(channel_id.clone()),
                 })

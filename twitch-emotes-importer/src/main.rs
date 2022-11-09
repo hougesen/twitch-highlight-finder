@@ -1,9 +1,11 @@
+use db::save_emotes;
 use dotenv::dotenv;
 use twitch::{
     authentication::authenticate_twitch,
     emotes::{fetch_channel_emotes, fetch_global_emotes, TwitchEmote},
 };
 
+mod db;
 mod twitch;
 
 async fn build_http_client() -> Result<reqwest::Client, Box<dyn std::error::Error>> {
@@ -34,6 +36,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             found_emotes.append(&mut channel_emotes);
         }
     }
+
+    // Handling the error doesn't really matter since we have set insert_many to be unordered
+    save_emotes(found_emotes).await.ok();
 
     Ok(())
 }

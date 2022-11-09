@@ -18,7 +18,7 @@ fn main() -> Result<(), tungstenite::Error> {
 
     let channel_join_queue = Queue::from(vec![
         Message::Text("JOIN #esl_csgo".into()),
-        Message::Text("JOIN #esl_csgo2".into()),
+        Message::Text("JOIN #esl_csgob".into()),
         Message::Text("JOIN #hougesen".into()),
     ]);
 
