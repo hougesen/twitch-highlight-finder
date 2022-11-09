@@ -22,7 +22,7 @@ pub async fn authenticate_twitch() -> Result<HeaderMap, Box<dyn std::error::Erro
 
     headers.insert(
         "Authorization",
-        HeaderValue::from_str(&format!("Bearer: {}", &parsed_token_req.access_token))?,
+        HeaderValue::from_str(&format!("Bearer {}", &parsed_token_req.access_token))?,
     );
 
     headers.insert("Client-Id", HeaderValue::from_str(&client_id)?);
