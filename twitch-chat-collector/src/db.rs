@@ -1,4 +1,6 @@
+use mongodb::bson::oid::ObjectId;
 use mongodb::sync::{Client, Database};
+use tungstenite::Message;
 
 pub fn get_db_client() -> Database {
     let db_connection_string =
@@ -6,7 +8,32 @@ pub fn get_db_client() -> Database {
 
     let client = Client::with_uri_str(db_connection_string).unwrap();
 
-    let db = client.database("highlights");
+    client.database("highlights")
+}
 
-    db
+struct ChannelCollection {
+    _id: ObjectId,
+    #[allow(dead_code)]
+    channel_name: String,
+}
+
+pub fn get_channel_queue(db: &Database) -> Vec<Message> {
+    let collection = db.collection::<ChannelCollection>("channels");
+
+    let mut channel_queue = Vec::new();
+
+    if let Ok(channel_queue_bson) = collection.distinct("channel_name", None, None) {
+        if !channel_queue_bson.is_empty() {
+            for channel in channel_queue_bson {
+                if let Some(channel_name) = channel.as_str() {
+                    channel_queue.push(Message::Text(format!(
+                        "JOIN #{}",
+                        channel_name.to_lowercase().trim()
+                    )));
+                }
+            }
+        }
+    }
+
+    channel_queue
 }

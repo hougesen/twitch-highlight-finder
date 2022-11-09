@@ -1,8 +1,6 @@
 use crossbeam_channel::Receiver;
-use mongodb::options::InsertManyOptions;
+use mongodb::{options::InsertManyOptions, sync::Database};
 use tungstenite::Message;
-
-use crate::db::get_db_client;
 
 #[derive(serde::Serialize)]
 struct TwitchChatMessage {
@@ -12,12 +10,10 @@ struct TwitchChatMessage {
     timestamp: u64,
 }
 
-pub fn message_parser_thread(message_rx: Receiver<(Message, u64)>) {
-    let mut parsed_messages: Vec<TwitchChatMessage> = vec![];
+pub fn message_parser_thread(db_client: Database, message_rx: Receiver<(Message, u64)>) -> ! {
+    let mut parsed_messages: Vec<TwitchChatMessage> = Vec::new();
 
-    let db = get_db_client();
-
-    let collection = db.collection::<TwitchChatMessage>("twitch_messages");
+    let collection = db_client.collection::<TwitchChatMessage>("twitch_messages");
 
     let insert_options = InsertManyOptions::builder().ordered(Some(false)).build();
 
@@ -31,16 +27,18 @@ pub fn message_parser_thread(message_rx: Receiver<(Message, u64)>) {
                 .insert_many(&parsed_messages, Some(insert_options.clone()))
                 .ok();
 
-            parsed_messages = vec![];
+            parsed_messages = Vec::new();
         }
     });
 
-    eprintln!("Somehow out of message_parser_thread?")
+    panic!("Somehow out of message_parser_thread?");
 }
 
 /// :caveaio!caveaio@caveaio.tmi.twitch.tv PRIVMSG #hougesen :test
 fn parse_message(socket_message: Message, timestamp: u64) -> Option<TwitchChatMessage> {
-    let msg = socket_message.into_text().unwrap();
+    let msg = socket_message
+        .into_text()
+        .unwrap_or_else(|_| "".to_string());
 
     if msg.contains("PRIVMSG") {
         let (sender, message) = msg.trim().split_once('!').unwrap();
@@ -57,6 +55,8 @@ fn parse_message(socket_message: Message, timestamp: u64) -> Option<TwitchChatMe
             timestamp,
             message: chat_message.trim().to_string(),
         });
+    } else {
+        println!("UNKNOWN MESSAGE: {:?}", msg.trim());
     }
 
     None

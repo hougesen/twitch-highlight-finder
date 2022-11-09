@@ -1,30 +1,26 @@
-use std::net::TcpStream;
-
 use crossbeam_channel::Sender;
 use tungstenite::{stream::MaybeTlsStream, Message, WebSocket};
 use url::Url;
 
-use crate::queue::Queue;
-
 pub fn socket_thread(
-    mut channel_join_queue: Queue<Message>,
+    mut channel_queue: Vec<Message>,
     message_tx: Sender<(Message, u64)>,
 ) -> Result<(), tungstenite::Error> {
-    let (mut socket, _response) =
-        tungstenite::connect(Url::parse("wss://irc-ws.chat.twitch.tv:443").unwrap())
-            .expect("Can't connect");
+    let twitch_wss_uri = Url::parse("wss://irc-ws.chat.twitch.tv:443").unwrap();
+
+    let (mut socket, _response) = tungstenite::connect(twitch_wss_uri)?;
 
     login_to_twitch(&mut socket)?;
 
-    if !channel_join_queue.is_empty() {
-        while !channel_join_queue.is_empty() {
-            if let Some(channel) = channel_join_queue.dequeue() {
-                socket.write_message(channel)?;
-            }
+    while !channel_queue.is_empty() {
+        if let Some(channel) = channel_queue.pop() {
+            socket.write_message(channel)?;
         }
     }
 
-    socket.write_pending().ok();
+    drop(channel_queue);
+
+    socket.write_pending()?;
 
     loop {
         if let Ok(message) = socket.read_message() {
@@ -34,6 +30,7 @@ pub fn socket_thread(
                 .as_secs();
 
             if message.is_text() {
+                // NOTE: no reason to waste time checking if succesful
                 message_tx.try_send((message, timestamp));
             }
         }
@@ -41,7 +38,7 @@ pub fn socket_thread(
 }
 
 fn login_to_twitch(
-    socket: &mut WebSocket<MaybeTlsStream<TcpStream>>,
+    socket: &mut WebSocket<MaybeTlsStream<std::net::TcpStream>>,
 ) -> Result<(), tungstenite::Error> {
     let client_token = dotenv::var("CLIENT_TOKEN").expect("Missing env CLIENT_TOKEN");
     let client_username = dotenv::var("CLIENT_USERNAME").expect("Missing env CLIENT_USERNAME");
