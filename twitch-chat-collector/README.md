@@ -1,3 +1,3 @@
 # twitch-chat-collector
 
-System for collecting Twitch chat messages
+System for collecting Twitch chat messages.

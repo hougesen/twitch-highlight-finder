@@ -3,30 +3,25 @@ use dotenv::dotenv;
 use tungstenite::Message;
 
 use crate::chat::socket_thread;
+use crate::db::{get_channel_queue, get_db_client};
 use crate::parser::message_parser_thread;
-use crate::queue::Queue;
 
 mod chat;
 mod db;
 mod parser;
-mod queue;
 
 fn main() -> Result<(), tungstenite::Error> {
     println!("Starting Twitch Chat Collector");
 
     dotenv().ok();
 
-    let channel_join_queue = Queue::from(vec![
-        Message::Text("JOIN #esl_csgo".into()),
-        Message::Text("JOIN #esl_csgob".into()),
-        Message::Text("JOIN #hougesen".into()),
-    ]);
+    let db_client = get_db_client();
+
+    let channel_queue = get_channel_queue(&db_client);
 
     let (message_tx, message_rx) = unbounded::<(Message, u64)>();
 
-    std::thread::spawn(|| socket_thread(channel_join_queue, message_tx));
+    std::thread::spawn(|| socket_thread(channel_queue, message_tx));
 
-    message_parser_thread(message_rx);
-
-    Ok(())
+    message_parser_thread(db_client, message_rx);
 }
