@@ -11,7 +11,9 @@ export default function ChannelsIndex() {
 
     async function fetchChannels() {
         if (loading) return;
+
         setLoading(true);
+
         axios
             .get('/api/channels')
             .then((res: AxiosResponse<IChannel[]>) => setChannels(res?.data ?? []))
