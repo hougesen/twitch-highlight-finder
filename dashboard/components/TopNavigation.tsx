@@ -10,6 +10,10 @@ export default function TopNavigation() {
             <Link href={'/emotes'} className="text-xl">
                 Emotes
             </Link>
+
+            <Link href={'/emotes/queue'} className="text-xl">
+                Emote queue
+            </Link>
         </div>
     );
 }

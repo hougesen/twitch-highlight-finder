@@ -5,7 +5,12 @@ import type { IEmote } from '../../../types/models';
 async function getNextEmote(): Promise<IEmote | null> {
     let db = await getDbClient();
 
-    const emote = await db.collection('emotes').findOne({ score: { $exists: false } });
+    const emote = await db.collection('emotes').findOne(
+        { score: { $exists: false } },
+        {
+            sort: { channel_id: 1 },
+        }
+    );
 
     return emote as IEmote | null;
 }

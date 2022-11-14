@@ -6,7 +6,7 @@ export default function Spinner() {
             viewBox="0 0 24 24"
             className="animate-spin -ml-1 mr-3 h-5 w-5"
         >
-            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" className="opacity-25" />
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25" />
             <path
                 fill="currentColor"
                 className="opacity-75"
