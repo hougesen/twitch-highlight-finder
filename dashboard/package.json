@@ -1,0 +1,48 @@
+{
+    "name": "dashboard",
+    "version": "0.0.1",
+    "description": "",
+    "keywords": [],
+    "author": "Mads Hougesen <mads@mhouge.dk> (https://mhouge.dk)",
+    "license": "MIT",
+    "homepage": "https://github.com/hougesen/twitch-chat-sentiment-analysis#readme",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/hougesen/twitch-chat-sentiment-analysis.git"
+    },
+    "bugs": {
+        "url": "https://github.com/hougesen/twitch-chat-sentiment-analysis/issues"
+    },
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "format": "prettier --ignore-path .gitignore --write .",
+        "lint": "npm run format ; next lint"
+    },
+    "dependencies": {
+        "@types/node": "18.11.9",
+        "@types/react": "18.0.25",
+        "@types/react-dom": "18.0.8",
+        "axios": "^1.1.3",
+        "mongodb": "^4.11.0",
+        "next": "13.0.2",
+        "react": "18.2.0",
+        "react-dom": "18.2.0",
+        "typescript": "4.8.4"
+    },
+    "devDependencies": {
+        "@types/eslint": "8.4.10",
+        "@types/eslint-plugin-prettier": "^3.1.0",
+        "@types/prettier": "^2.7.1",
+        "autoprefixer": "^10.4.13",
+        "eslint": "^8.27.0",
+        "eslint-config-next": "13.0.2",
+        "eslint-config-prettier": "^8.5.0",
+        "eslint-plugin-import": "^2.26.0",
+        "eslint-plugin-prettier": "^4.2.1",
+        "postcss": "^8.4.18",
+        "prettier": "^2.7.1",
+        "tailwindcss": "^3.2.2"
+    }
+}
