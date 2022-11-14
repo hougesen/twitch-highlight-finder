@@ -1,10 +1,11 @@
 use crossbeam_channel::Sender;
+use mongodb::bson::DateTime;
 use tungstenite::{stream::MaybeTlsStream, Message, WebSocket};
 use url::Url;
 
 pub fn socket_thread(
     mut channel_queue: Vec<Message>,
-    message_tx: Sender<(Message, u64)>,
+    message_tx: Sender<(Message, DateTime)>,
 ) -> Result<(), tungstenite::Error> {
     let twitch_wss_uri = Url::parse("wss://irc-ws.chat.twitch.tv:443").unwrap();
 
@@ -24,10 +25,7 @@ pub fn socket_thread(
 
     loop {
         if let Ok(message) = socket.read_message() {
-            let timestamp = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap()
-                .as_secs();
+            let timestamp = DateTime::now();
 
             if message.is_text() {
                 // NOTE: no reason to waste time checking if succesful
