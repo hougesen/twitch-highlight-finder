@@ -1,6 +1,6 @@
 [package]
 name = "twitch-emote-importer"
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 description = "System for fetching Twitch emotes"
 repository = "https://github.com/hougesen/twitch-chat-sentiment-analysis"

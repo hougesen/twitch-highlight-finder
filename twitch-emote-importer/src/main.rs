@@ -1,4 +1,4 @@
-use db::save_emotes;
+use db::{fetch_channels, save_emotes};
 use dotenv::dotenv;
 use twitch::emotes::{fetch_channel_emotes, fetch_global_emotes};
 use utility::build_http_client;
@@ -20,11 +20,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     // NOTE: if this was production code i would most likely implement this using a mqtt queue
-    let channel_ids = vec!["31239503".to_string(), "35936871".to_string()];
-
-    for channel_id in channel_ids {
-        if let Ok(mut channel_emotes) = fetch_channel_emotes(channel_id, &http_client).await {
-            emotes.append(&mut channel_emotes);
+    if let Ok(channel_ids) = fetch_channels().await {
+        for channel_id in channel_ids {
+            if let Ok(mut channel_emotes) = fetch_channel_emotes(channel_id, &http_client).await {
+                emotes.append(&mut channel_emotes);
+            }
         }
     }
 
