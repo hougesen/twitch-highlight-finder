@@ -5,9 +5,9 @@ import type { IEmote } from '../../../types/models';
 async function fetchEmotes(): Promise<IEmote[]> {
     const db = await getDbClient();
 
-    const emotes = await db.collection('emotes').find({}).toArray();
+    const emotes = await db.collection<IEmote>('emotes').find({}).toArray();
 
-    return emotes as IEmote[];
+    return emotes ?? [];
 }
 
 export default async function handler(

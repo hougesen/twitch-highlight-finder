@@ -7,9 +7,9 @@ import { IChannel } from '../../../../types/models';
 async function getChannelById(channelId: string): Promise<IChannel | null> {
     const db = await getDbClient();
 
-    const channel = await db.collection('channels').findOne({ _id: new ObjectId(channelId) });
+    const channel = await db.collection<IChannel>('channels').findOne({ _id: new ObjectId(channelId) });
 
-    return channel as IChannel | null;
+    return channel;
 }
 
 async function updateChannel(channelId: string, channelName: string): Promise<IChannel | null> {
@@ -21,7 +21,7 @@ async function updateChannel(channelId: string, channelName: string): Promise<IC
 
     const db = await getDbClient();
 
-    const channel = await db.collection('channels').findOneAndUpdate(
+    const channel = await db.collection<IChannel>('channels').findOneAndUpdate(
         {
             _id: new ObjectId(channelId),
         },
@@ -32,7 +32,7 @@ async function updateChannel(channelId: string, channelName: string): Promise<IC
         }
     );
 
-    return channel?.value as IChannel | null;
+    return channel?.value;
 }
 
 async function deleteChannelById(channelId: string) {

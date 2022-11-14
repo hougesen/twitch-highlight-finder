@@ -49,11 +49,11 @@ async function getTwitchAuthHeader(): Promise<{
 async function fetchChannels(): Promise<IChannel[]> {
     const db = await getDbClient();
 
-    const collection = db.collection('channels');
+    const collection = db.collection<IChannel>('channels');
 
-    const channels = (await collection.find({}).toArray()) ?? [];
+    const channels = await collection.find({}).toArray();
 
-    return channels as IChannel[];
+    return channels ?? [];
 }
 
 async function getChannelId(channelName: string): Promise<string | null> {
@@ -72,7 +72,7 @@ async function getChannelId(channelName: string): Promise<string | null> {
         });
 }
 
-async function insertChannel(channelName: string): Promise<IChannel> {
+async function insertChannel(channelName: string): Promise<IChannel | null> {
     const formattedChannelName = channelName?.trim()?.toLowerCase();
 
     if (!formattedChannelName?.length) {
@@ -81,7 +81,7 @@ async function insertChannel(channelName: string): Promise<IChannel> {
 
     const db = await getDbClient();
 
-    const collection = db.collection('channels');
+    const collection = db.collection<IChannel>('channels');
 
     const channelId = await getChannelId(channelName);
 
@@ -102,10 +102,13 @@ async function insertChannel(channelName: string): Promise<IChannel> {
         { upsert: true }
     );
 
-    return channel?.value as IChannel;
+    return channel?.value;
 }
 
-export default function handler(req: NextApiRequest, res: NextApiResponse<IChannel | IChannel[] | { error: unknown }>) {
+export default function handler(
+    req: NextApiRequest,
+    res: NextApiResponse<IChannel | IChannel[] | null | { error: unknown }>
+) {
     switch (req.method) {
         case 'GET':
             return fetchChannels()
