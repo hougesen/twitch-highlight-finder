@@ -68,6 +68,6 @@ export default function handler(
                 .catch((error?: Error) => res.status(400).send({ error: error?.message ?? error }));
 
         default:
-            return res.status(405).send({ error: 'Method not allowed.' });
+            return res.setHeader('Allow', ['GET', 'PUT', 'DELETE']).status(405).send({ error: 'Method not allowed.' });
     }
 }

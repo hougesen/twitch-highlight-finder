@@ -64,7 +64,10 @@ export default function handler(req: NextApiRequest, res: NextApiResponse<IEmote
                 .then(() => res.status(200).send())
                 .catch((error?: Error) => res.status(400).send({ error: error?.message ?? error }));
 
+        case 'OPTIONS':
+            return res.setHeader('Allow', ['GET', 'PUT', 'DELETE']).status(200).end();
+
         default:
-            return res.status(405).send({ error: 'Method not allowed.' });
+            return res.setHeader('Allow', ['GET', 'PUT', 'DELETE']).status(405).send({ error: 'Method not allowed.' });
     }
 }

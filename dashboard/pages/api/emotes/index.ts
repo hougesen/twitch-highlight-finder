@@ -6,7 +6,7 @@ async function fetchEmotes(): Promise<IEmote[]> {
     const db = await getDbClient();
 
     const emotes = await db.collection('emotes').find({}).toArray();
-    console.log('motes', emotes);
+
     return emotes as IEmote[];
 }
 
@@ -20,7 +20,10 @@ export default async function handler(
                 .then((emotes) => res.status(200).send(emotes))
                 .catch((error?: Error) => res.status(400).send({ error: error?.message ?? error }));
 
+        case 'OPTIONS':
+            return res.setHeader('Allow', ['GET']).status(200).end();
+
         default:
-            return res.status(405).send({ error: 'Method not allowed.' });
+            return res.setHeader('Allow', ['GET']).status(405).send({ error: 'Method not allowed.' });
     }
 }

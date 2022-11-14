@@ -1,7 +1,50 @@
+import axios, { AxiosResponse } from 'axios';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { MissingFieldError } from '../../../lib/errors';
 import getDbClient from '../../../lib/mongodb';
 import type { IChannel } from '../../../types/models';
+
+async function getTwitchAuthHeader(): Promise<{
+    headers: {
+        'Client-ID': string;
+        Accept: string;
+        Authorization: string;
+    };
+}> {
+    const { CLIENT_ID, CLIENT_SECRET } = process?.env;
+
+    if (!CLIENT_ID?.length) {
+        throw new Error('Invalid/Missing environment variable: "CLIENT_ID"');
+    }
+
+    if (!CLIENT_SECRET?.length) {
+        throw new Error('Invalid/Missing environment variable: "CLIENT_SECRET"');
+    }
+
+    const twitchAccessToken = await axios
+        .post(
+            `https://id.twitch.tv/oauth2/token?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=client_credentials&state=def`
+        )
+        .then((res: AxiosResponse<{ access_token: string }>) => res?.data?.access_token)
+        .catch((error) => {
+            console.error('getTwitchToken error getting oauth token', error?.response?.data);
+            return null;
+        });
+
+    if (!twitchAccessToken) {
+        throw new Error('getTwitchAuthHeader: Error getting Twitch Access Token');
+    }
+
+    const axiosConfig = {
+        headers: {
+            'Client-ID': CLIENT_ID,
+            Accept: 'application/vnd.twitchtv.v5+json',
+            Authorization: `Bearer ${twitchAccessToken}`,
+        },
+    };
+
+    return axiosConfig;
+}
 
 async function fetchChannels(): Promise<IChannel[]> {
     const db = await getDbClient();
@@ -11,6 +54,22 @@ async function fetchChannels(): Promise<IChannel[]> {
     const channels = (await collection.find({}).toArray()) ?? [];
 
     return channels as IChannel[];
+}
+
+async function getChannelId(channelName: string): Promise<string | null> {
+    return await axios
+        .get(`https://api.twitch.tv/helix/users?login=${channelName}`, await getTwitchAuthHeader())
+        .then((res: AxiosResponse<{ data: Array<{ id: string }> }>) => {
+            if (res?.data?.data?.length) {
+                return res?.data?.data[0]?.id;
+            }
+
+            return null;
+        })
+        .catch((error) => {
+            console.error('getChannelId error', error?.response?.data);
+            return null;
+        });
 }
 
 async function insertChannel(channelName: string): Promise<IChannel> {
@@ -24,8 +83,15 @@ async function insertChannel(channelName: string): Promise<IChannel> {
 
     const collection = db.collection('channels');
 
-    const upsertItem = {
+    const channelId = await getChannelId(channelName);
+
+    if (!channelId) {
+        throw new Error('Error: Not a valid Twitch Channel');
+    }
+
+    const upsertItem: Partial<IChannel> = {
         channel_name: formattedChannelName,
+        channel_id: channelId,
     };
 
     const channel = await collection.findOneAndUpdate(
@@ -52,6 +118,6 @@ export default function handler(req: NextApiRequest, res: NextApiResponse<IChann
                 .catch((error?: Error) => res.status(400).send({ error: error?.message ?? error }));
 
         default:
-            return res.status(405).send({ error: 'Method not allowed.' });
+            return res.setHeader('Allow', ['GET', 'POST']).status(405).send({ error: 'Method not allowed.' });
     }
 }
