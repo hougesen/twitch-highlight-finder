@@ -17,12 +17,18 @@ pub fn message_parser_thread(db_client: Database, message_rx: Receiver<(Message,
 
     let insert_options = InsertManyOptions::builder().ordered(Some(false)).build();
 
+    let mut last_saved = std::time::Instant::now();
+
     message_rx.iter().for_each(|(m, t)| {
         if let Some(parsed_message) = parse_message(m, t) {
             parsed_messages.push(parsed_message);
         }
 
-        if parsed_messages.len() > 100 {
+        if !parsed_messages.is_empty() && last_saved.elapsed().as_secs() > 30 {
+            last_saved = std::time::Instant::now();
+
+            println!("Save messages: {}", parsed_messages.len());
+
             collection
                 .insert_many(&parsed_messages, Some(insert_options.clone()))
                 .ok();
