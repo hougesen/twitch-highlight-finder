@@ -1,6 +1,6 @@
 [package]
 name = "twitch-chat-collector"
-version = "0.0.3"
+version = "0.0.4"
 edition = "2021"
 description = "System for collecting Twitch chat messages"
 repository = "https://github.com/hougesen/twitch-chat-sentiment-analysis"

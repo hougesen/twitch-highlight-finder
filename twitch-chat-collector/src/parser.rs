@@ -1,5 +1,5 @@
 use crossbeam_channel::Receiver;
-use mongodb::{options::InsertManyOptions, sync::Database};
+use mongodb::{bson::DateTime, options::InsertManyOptions, sync::Database};
 use tungstenite::Message;
 
 #[derive(serde::Serialize)]
@@ -7,10 +7,10 @@ struct TwitchChatMessage {
     channel: String,
     sender: String,
     message: String,
-    timestamp: u64,
+    timestamp: DateTime,
 }
 
-pub fn message_parser_thread(db_client: Database, message_rx: Receiver<(Message, u64)>) -> ! {
+pub fn message_parser_thread(db_client: Database, message_rx: Receiver<(Message, DateTime)>) -> ! {
     let mut parsed_messages: Vec<TwitchChatMessage> = Vec::new();
 
     let collection = db_client.collection::<TwitchChatMessage>("twitch_messages");
@@ -41,7 +41,7 @@ pub fn message_parser_thread(db_client: Database, message_rx: Receiver<(Message,
 }
 
 /// :caveaio!caveaio@caveaio.tmi.twitch.tv PRIVMSG #hougesen :test
-fn parse_message(socket_message: Message, timestamp: u64) -> Option<TwitchChatMessage> {
+fn parse_message(socket_message: Message, timestamp: DateTime) -> Option<TwitchChatMessage> {
     let msg = socket_message
         .into_text()
         .unwrap_or_else(|_| "".to_string());
