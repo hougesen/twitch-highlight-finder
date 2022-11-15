@@ -1,6 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
+
 import { MessageList } from '../../../components/MessageList';
 import Spinner from '../../../components/Spinner';
 import { IChannel, ITwitchChatMessage } from '../../../types/models';

@@ -1,8 +1,9 @@
 import { ObjectId } from 'mongodb';
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
+
 import { MissingFieldError } from '../../../lib/errors';
 import getDbClient from '../../../lib/mongodb';
-import type { IEmote } from '../../../types/models';
+import { IEmote } from '../../../types/models';
 
 async function getEmoteById(emoteId: string): Promise<IEmote | null> {
     const db = await getDbClient();

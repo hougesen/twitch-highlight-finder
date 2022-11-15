@@ -1,6 +1,7 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
+
 import getDbClient from '../../../lib/mongodb';
-import type { IEmote } from '../../../types/models';
+import { IEmote } from '../../../types/models';
 
 async function getNextEmote(): Promise<IEmote | null> {
     let db = await getDbClient();

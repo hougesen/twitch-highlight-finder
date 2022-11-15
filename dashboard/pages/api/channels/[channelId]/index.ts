@@ -1,5 +1,6 @@
 import { ObjectId } from 'mongodb';
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
+
 import { MissingFieldError } from '../../../../lib/errors';
 import getDbClient from '../../../../lib/mongodb';
 import { IChannel } from '../../../../types/models';

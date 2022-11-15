@@ -1,8 +1,9 @@
 import axios, { AxiosResponse } from 'axios';
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
+
 import { MissingFieldError } from '../../../lib/errors';
 import getDbClient from '../../../lib/mongodb';
-import type { IChannel } from '../../../types/models';
+import { IChannel } from '../../../types/models';
 
 async function getTwitchAuthHeader(): Promise<{
     headers: {

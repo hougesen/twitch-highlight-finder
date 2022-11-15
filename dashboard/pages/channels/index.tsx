@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { useEffect, useState } from 'react';
+
 import AddChannelModal from '../../components/AddChannelModal';
 import { ChannelList } from '../../components/ChannelList';
 import { IChannel } from '../../types/models';
