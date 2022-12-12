@@ -27,13 +27,19 @@ pub fn message_parser_thread(db_client: Database, message_rx: Receiver<(Message,
         if !parsed_messages.is_empty() && last_saved.elapsed().as_secs() > 30 {
             last_saved = std::time::Instant::now();
 
-            println!("Save messages: {}", parsed_messages.len());
+            println!(
+                "{} Save messages: {}",
+                parsed_messages[parsed_messages.len() - 1].timestamp,
+                parsed_messages.len()
+            );
 
             collection
                 .insert_many(&parsed_messages, Some(insert_options.clone()))
                 .ok();
 
             parsed_messages = Vec::new();
+        } else if last_saved.elapsed().as_secs() > 30 {
+            println!("{} seconds since last save", last_saved.elapsed().as_secs());
         }
     });
 
