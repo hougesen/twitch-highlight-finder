@@ -1,5 +1,5 @@
 [package]
-name = "twitch-chat-collector"
+name = "chatbot"
 version = "0.0.4"
 edition = "2021"
 description = "System for collecting Twitch chat messages"

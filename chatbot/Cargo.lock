@@ -283,6 +283,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
+name = "chatbot"
+version = "0.0.4"
+dependencies = [
+ "crossbeam-channel",
+ "dotenv",
+ "mongodb",
+ "serde",
+ "serde_json",
+ "tungstenite",
+ "url",
+]
+
+[[package]]
 name = "chrono"
 version = "0.4.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1786,19 +1799,6 @@ dependencies = [
  "thiserror",
  "url",
  "utf-8",
-]
-
-[[package]]
-name = "twitch-chat-collector"
-version = "0.0.4"
-dependencies = [
- "crossbeam-channel",
- "dotenv",
- "mongodb",
- "serde",
- "serde_json",
- "tungstenite",
- "url",
 ]
 
 [[package]]
