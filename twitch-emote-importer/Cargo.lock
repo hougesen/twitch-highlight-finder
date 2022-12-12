@@ -23,12 +23,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "anyhow"
-version = "1.0.66"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "216261ddc8289130e551ddcd5ce8a064710c0d064a4d2895c67151c92b5443f6"
-
-[[package]]
 name = "async-trait"
 version = "0.1.58"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -281,6 +275,17 @@ name = "dotenv"
 version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "77c90badedccf4105eca100756a0b1289e191f6fcbdadd3cee1d2f614f97da8f"
+
+[[package]]
+name = "emote-importer"
+version = "0.0.2"
+dependencies = [
+ "dotenv",
+ "mongodb",
+ "reqwest",
+ "serde",
+ "tokio",
+]
 
 [[package]]
 name = "encoding_rs"
@@ -875,9 +880,9 @@ checksum = "86f0b0d4bf799edbc74508c1e8bf170ff5f41238e5f8225603ca7caaae2b7860"
 
 [[package]]
 name = "openssl"
-version = "0.10.42"
+version = "0.10.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12fc0523e3bd51a692c8850d075d74dc062ccf251c0110668cbd921917118a13"
+checksum = "29d971fd5722fec23977260f6e81aa67d2f22cadbdc2aa049f1022d9a3be1566"
 dependencies = [
  "bitflags",
  "cfg-if",
@@ -907,9 +912,9 @@ checksum = "ff011a302c396a5197692431fc1948019154afc178baf7d8e37367442a4601cf"
 
 [[package]]
 name = "openssl-sys"
-version = "0.9.77"
+version = "0.9.79"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b03b84c3b2d099b81f0953422b4d4ad58761589d0229b5506356afca05a3670a"
+checksum = "5454462c0eced1e97f2ec09036abc8da362e66802f66fd20f86854d9d8cbcbc4"
 dependencies = [
  "autocfg",
  "cc",
@@ -1338,15 +1343,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "signal-hook-registry"
-version = "1.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e51e73328dc4ac0c7ccbda3a494dfa03df1de2f46018127f60c693f2648455b0"
-dependencies = [
- "libc",
-]
-
-[[package]]
 name = "slab"
 version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1524,9 +1520,7 @@ dependencies = [
  "memchr",
  "mio",
  "num_cpus",
- "parking_lot",
  "pin-project-lite",
- "signal-hook-registry",
  "socket2",
  "tokio-macros",
  "winapi",
@@ -1654,18 +1648,6 @@ name = "try-lock"
 version = "0.2.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "59547bce71d9c38b83d9c0e92b6066c4253371f15005def0c30d9657f50c7642"
-
-[[package]]
-name = "twitch-emote-importer"
-version = "0.0.2"
-dependencies = [
- "anyhow",
- "dotenv",
- "mongodb",
- "reqwest",
- "serde",
- "tokio",
-]
 
 [[package]]
 name = "typed-builder"
