@@ -1,4 +1,5 @@
 import { NextApiRequest, NextApiResponse } from 'next';
+
 import getDbClient from '../../../lib/mongodb';
 
 export default async function handler(_req: NextApiRequest, res: NextApiResponse<{ count: number }>) {

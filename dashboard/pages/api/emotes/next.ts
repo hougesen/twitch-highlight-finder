@@ -1,18 +1,19 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
+
 import getDbClient from '../../../lib/mongodb';
-import type { IEmote } from '../../../types/models';
+import { IEmote } from '../../../types/models';
 
 async function getNextEmote(): Promise<IEmote | null> {
     let db = await getDbClient();
 
-    const emote = await db.collection('emotes').findOne(
+    const emote = await db.collection<IEmote>('emotes').findOne(
         { score: { $exists: false } },
         {
             sort: { channel_id: 1 },
         }
     );
 
-    return emote as IEmote | null;
+    return emote;
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<IEmote | null | { error: unknown }>) {

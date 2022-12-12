@@ -1,5 +1,6 @@
-import { ChangeEvent, FormEvent, useState } from 'react';
 import axios, { AxiosError } from 'axios';
+import { ChangeEvent, FormEvent, useState } from 'react';
+
 import Spinner from './Spinner';
 
 export default function AddChannelModal({ closeModal }: { closeModal: () => void }) {

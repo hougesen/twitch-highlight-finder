@@ -1,15 +1,16 @@
 import { ObjectId } from 'mongodb';
-import type { NextApiRequest, NextApiResponse } from 'next';
-import { MissingFieldError } from '../../../lib/errors';
-import getDbClient from '../../../lib/mongodb';
-import { IChannel } from '../../../types/models';
+import { NextApiRequest, NextApiResponse } from 'next';
+
+import { MissingFieldError } from '../../../../lib/errors';
+import getDbClient from '../../../../lib/mongodb';
+import { IChannel } from '../../../../types/models';
 
 async function getChannelById(channelId: string): Promise<IChannel | null> {
     const db = await getDbClient();
 
-    const channel = await db.collection('channels').findOne({ _id: new ObjectId(channelId) });
+    const channel = await db.collection<IChannel>('channels').findOne({ _id: new ObjectId(channelId) });
 
-    return channel as IChannel | null;
+    return channel;
 }
 
 async function updateChannel(channelId: string, channelName: string): Promise<IChannel | null> {
@@ -21,7 +22,7 @@ async function updateChannel(channelId: string, channelName: string): Promise<IC
 
     const db = await getDbClient();
 
-    const channel = await db.collection('channels').findOneAndUpdate(
+    const channel = await db.collection<IChannel>('channels').findOneAndUpdate(
         {
             _id: new ObjectId(channelId),
         },
@@ -32,7 +33,7 @@ async function updateChannel(channelId: string, channelName: string): Promise<IC
         }
     );
 
-    return channel?.value as IChannel | null;
+    return channel?.value;
 }
 
 async function deleteChannelById(channelId: string) {
@@ -68,6 +69,9 @@ export default function handler(
                 .catch((error?: Error) => res.status(400).send({ error: error?.message ?? error }));
 
         default:
-            return res.setHeader('Allow', ['GET', 'PUT', 'DELETE']).status(405).send({ error: 'Method not allowed.' });
+            return res
+                .setHeader('Allow', ['GET', 'PUT', 'DELETE'])
+                .status(req?.method === 'OPTIONS' ? 200 : 405)
+                .send({ error: 'Method not allowed.' });
     }
 }

@@ -1,5 +1,7 @@
 import '../styles/globals.css';
-import type { AppProps } from 'next/app';
+
+import { AppProps } from 'next/app';
+
 import TopNavigation from '../components/TopNavigation';
 
 export default function App({ Component, pageProps }: AppProps) {

@@ -11,3 +11,10 @@ export declare interface IEmote extends WithId<Document> {
     channel_id?: string;
     score?: number;
 }
+
+export declare interface ITwitchChatMessage extends WithId<Document> {
+    channel: string;
+    sender: string;
+    message: string;
+    timestamp: Date | string;
+}

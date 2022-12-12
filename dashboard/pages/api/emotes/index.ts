@@ -1,13 +1,14 @@
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
+
 import getDbClient from '../../../lib/mongodb';
-import type { IEmote } from '../../../types/models';
+import { IEmote } from '../../../types/models';
 
 async function fetchEmotes(): Promise<IEmote[]> {
     const db = await getDbClient();
 
-    const emotes = await db.collection('emotes').find({}).toArray();
+    const emotes = await db.collection<IEmote>('emotes').find({}).toArray();
 
-    return emotes as IEmote[];
+    return emotes ?? [];
 }
 
 export default async function handler(

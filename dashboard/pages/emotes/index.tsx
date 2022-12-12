@@ -1,5 +1,6 @@
 import axios, { AxiosError, AxiosResponse } from 'axios';
 import { useEffect, useState } from 'react';
+
 import EmoteList from '../../components/EmoteList';
 import { IEmote } from '../../types/models';
 

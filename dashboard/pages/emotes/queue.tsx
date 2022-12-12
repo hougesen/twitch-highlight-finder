@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+
 import EmoteImage from '../../components/EmoteImage';
 import Spinner from '../../components/Spinner';
 import { IEmote } from '../../types/models';

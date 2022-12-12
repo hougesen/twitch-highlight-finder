@@ -1,15 +1,16 @@
 import { ObjectId } from 'mongodb';
-import type { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next';
+
 import { MissingFieldError } from '../../../lib/errors';
 import getDbClient from '../../../lib/mongodb';
-import type { IEmote } from '../../../types/models';
+import { IEmote } from '../../../types/models';
 
 async function getEmoteById(emoteId: string): Promise<IEmote | null> {
     const db = await getDbClient();
 
-    const emote = await db.collection('emotes').findOne({ _id: new ObjectId(emoteId) });
+    const emote = await db.collection<IEmote>('emotes').findOne({ _id: new ObjectId(emoteId) });
 
-    return emote as IEmote | null;
+    return emote;
 }
 
 async function updateEmoteById(emoteId: string, score: number): Promise<IEmote | null> {
@@ -23,7 +24,7 @@ async function updateEmoteById(emoteId: string, score: number): Promise<IEmote |
         score,
     };
 
-    const emote = await db.collection('emotes').findOneAndUpdate(
+    const emote = await db.collection<IEmote>('emotes').findOneAndUpdate(
         {
             _id: new ObjectId(emoteId),
         },
@@ -32,7 +33,7 @@ async function updateEmoteById(emoteId: string, score: number): Promise<IEmote |
         }
     );
 
-    return emote?.value as IEmote | null;
+    return emote?.value;
 }
 
 async function deleteEmoteById(emoteId: string) {
