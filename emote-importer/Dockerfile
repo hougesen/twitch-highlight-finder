@@ -7,7 +7,7 @@ WORKDIR /build
 ADD Cargo.toml Cargo.toml
 ADD Cargo.lock Cargo.lock
 ADD src src
-RUN apt-get update && apt-get -y install musl-tools
+RUN apt-get update && apt-get -y install musl-tools libssl-dev
 RUN rustup target add x86_64-unknown-linux-musl
 RUN cargo build --release --target x86_64-unknown-linux-musl
 
