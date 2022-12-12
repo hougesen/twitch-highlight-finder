@@ -1,15 +1,12 @@
 [package]
-name = "chat-analyzer"
+name = "analyzer"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 dashmap = "5.4.0"
 dotenv = "0.15.0"
-futures = { version = "0.3.25", features = ["thread-pool"] }
+futures = { version = "0.3.25" }
 mongodb = { version = "2.3.1", features = ["tokio-runtime"] }
-rayon = "1.6.1"
 serde = { version = "1.0.150", features = ["derive"] }
-threadpool = "1.8.1"
-# TODO: figure out which features are useless
-tokio = { version = "1.23.0", features = ["full"] }
+tokio = "1.23.0"
