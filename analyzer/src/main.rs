@@ -1,4 +1,4 @@
-use futures::StreamExt;
+use futures::{future, StreamExt};
 use mongodb::{bson::oid::ObjectId, change_stream::event::OperationType};
 
 mod analyzer;
@@ -53,11 +53,38 @@ async fn analyze_pending(
     let messages = db::get_pending_chat_messages(&db_client).await;
 
     println!("message len: {}", messages.len());
+    let mut raw_futs = vec![];
 
     for m in messages {
-        handle_new_message(&db_client, &emote_scores, m.id, m.message)
-            .await
-            .ok();
+        raw_futs.push(handle_new_message(
+            &db_client,
+            &emote_scores,
+            m.id,
+            m.message,
+        ));
+    }
+
+    let unpin_futs: Vec<_> = raw_futs.into_iter().map(Box::pin).collect();
+
+    let mut futs = unpin_futs;
+
+    while !futs.is_empty() {
+        match future::select_all(futs).await {
+            (Ok(_), _index, remaining) => {
+                if remaining.len() % 100 == 0 {
+                    println!("remaining: {}", remaining.len());
+                }
+
+                futs = remaining;
+            }
+            (Err(_e), _index, remaining) => {
+                if remaining.len() % 100 == 0 {
+                    println!("remaining: {}", remaining.len());
+                }
+
+                futs = remaining;
+            }
+        }
     }
 
     Ok(())
