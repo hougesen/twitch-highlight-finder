@@ -1,0 +1,6 @@
+.idea
+.gitignore
+.git
+Dockerfile
+*.zip
+target

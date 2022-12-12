@@ -10,3 +10,7 @@ futures = { version = "0.3.25" }
 mongodb = { version = "2.3.1", features = ["tokio-runtime"] }
 serde = { version = "1.0.150", features = ["derive"] }
 tokio = "1.23.0"
+
+[[bin]]
+name = "bootstrap"
+path = "src/main.rs"

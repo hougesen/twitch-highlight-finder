@@ -1,10 +1,25 @@
-FROM rust:1.64 as builder
-WORKDIR /usr/src/analyzer
-COPY . .
-RUN cargo install --path .
+ARG FUNCTION_DIR="/function"
 
-FROM debian:buster-slim as runner
-RUN apt-get update && apt-get install -y build-essential && apt-get install -y ca-certificates && rm -rf /var/lib/apt/lists/*
-COPY --from=builder /usr/local/cargo/bin/analyzer /usr/local/bin/analyzer
+FROM rust:1.64-buster as builder
 
-CMD ["analyzer"]
+WORKDIR /build
+
+ADD Cargo.toml Cargo.toml
+ADD Cargo.lock Cargo.lock
+ADD src src
+
+RUN rustup target add x86_64-unknown-linux-musl
+RUN cargo build --release --target x86_64-unknown-linux-musl
+
+# copy artifacts to a clean image
+FROM gcr.io/distroless/static
+
+# Include global arg in this stage of the build
+ARG FUNCTION_DIR
+
+# Set working directory to function root directory
+WORKDIR ${FUNCTION_DIR}
+
+COPY --from=builder /build/target/x86_64-unknown-linux-musl/release/bootstrap bootstrap
+
+ENTRYPOINT [ "./bootstrap" ]
