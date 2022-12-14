@@ -9,7 +9,10 @@ authors = ["Mads Hougesen <mads@mhouge.dk>"]
 [dependencies]
 dotenv = "0.15.0"
 mongodb = { version = "2.3.1", features = ["tokio-runtime"] }
-reqwest = { version = "0.11.12", features = ["json"] }
+reqwest = { default-features = false, version = "0.11.13", features = [
+    "json",
+    "rustls-tls"
+] }
 serde = { version = "1.0.147", features = ["derive"] }
 tokio = "1.21.2"
 

@@ -28,6 +28,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    println!("emotes len: {}", emotes.len());
+
     // Handling the error doesn't really matter since we have set insert_many to be unordered
     save_emotes(emotes).await.ok();
 
