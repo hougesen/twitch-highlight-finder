@@ -1,7 +1,6 @@
 use crossbeam_channel::unbounded;
 use dotenv::dotenv;
 use mongodb::bson::DateTime;
-use tungstenite::Message;
 
 use crate::chat::socket_thread;
 use crate::db::{get_channel_queue, get_db_client};
@@ -20,7 +19,7 @@ fn main() -> Result<(), tungstenite::Error> {
 
     let channel_queue = get_channel_queue(&db_client);
 
-    let (message_tx, message_rx) = unbounded::<(Message, DateTime)>();
+    let (message_tx, message_rx) = unbounded::<(String, DateTime)>();
 
     std::thread::spawn(|| socket_thread(channel_queue, message_tx));
 
