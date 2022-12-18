@@ -3,10 +3,9 @@ use mongodb::{Client, Database};
 use tungstenite::Message;
 
 pub async fn get_db_client() -> Result<Database, mongodb::error::Error> {
-    let db_connection_string =
-        dotenv::var("MONGO_CONNECTION_STRING").expect("Missing env MONGO_CONNECTION_STRING");
+    let mongo_uri = dotenv::var("MONGO_CONNECTION_URI").expect("Missing env MONGO_CONNECTION_URI");
 
-    match Client::with_uri_str(db_connection_string).await {
+    match Client::with_uri_str(mongo_uri).await {
         Ok(client) => Ok(client.database("highlights")),
         Err(mongo_error) => Err(mongo_error),
     }

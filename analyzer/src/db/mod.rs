@@ -4,18 +4,16 @@ use mongodb::{
     bson::{doc, oid::ObjectId},
     Database,
 };
-use serde::Deserialize;
 
 pub async fn get_db_client() -> Result<Database, mongodb::error::Error> {
-    let db_connection_string =
-        dotenv::var("MONGO_CONNECTION_STRING").expect("Missing env MONGO_CONNECTION_STRING");
+    let mongo_uri = dotenv::var("MONGO_CONNECTION_URI").expect("Missing env MONGO_CONNECTION_URI");
 
-    let client = mongodb::Client::with_uri_str(db_connection_string).await?;
+    let client = mongodb::Client::with_uri_str(mongo_uri).await?;
 
     Ok(client.database("highlights"))
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, serde::Deserialize)]
 pub struct TwitchEmote {
     #[serde(rename = "_id")]
     pub _id: ObjectId,
@@ -43,7 +41,7 @@ pub async fn get_emote_scores(db_client: &Database) -> DashMap<String, u8> {
     emote_scores
 }
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 pub struct TwitchChatMessage {
     #[serde(rename = "_id")]
     pub id: ObjectId,
@@ -54,7 +52,7 @@ pub struct TwitchChatMessage {
     pub message_score: Option<f32>,
 }
 
-#[derive(Deserialize)]
+#[derive(serde::Deserialize)]
 pub struct FoundMessage {
     #[serde(rename = "_id")]
     pub id: ObjectId,

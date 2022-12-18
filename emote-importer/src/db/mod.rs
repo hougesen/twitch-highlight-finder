@@ -1,15 +1,16 @@
-use mongodb::bson::doc;
-use mongodb::options::{IndexOptions, InsertManyOptions};
-use mongodb::results::{CreateIndexResult, InsertManyResult};
-use mongodb::{Collection, Database, IndexModel};
+use mongodb::{
+    bson::doc,
+    options::{IndexOptions, InsertManyOptions},
+    results::{CreateIndexResult, InsertManyResult},
+    {Collection, Database, IndexModel},
+};
 
 use crate::twitch::emotes::TwitchEmote;
 
 pub async fn get_db_client() -> Result<Database, mongodb::error::Error> {
-    let db_connection_string =
-        dotenv::var("MONGO_CONNECTION_STRING").expect("Missing env MONGO_CONNECTION_STRING");
+    let mongo_uri = dotenv::var("MONGO_CONNECTION_URI").expect("Missing env MONGO_CONNECTION_URI");
 
-    let client = mongodb::Client::with_uri_str(db_connection_string).await?;
+    let client = mongodb::Client::with_uri_str(mongo_uri).await?;
 
     Ok(client.database("highlights"))
 }

@@ -1,5 +1,4 @@
 use db::{fetch_channels, save_emotes};
-use dotenv::dotenv;
 use twitch::emotes::{fetch_channel_emotes, fetch_global_emotes};
 use utility::build_http_client;
 
@@ -9,8 +8,6 @@ mod utility;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    dotenv().ok();
-
     let http_client = build_http_client().await?;
 
     let mut emotes = Vec::new();
