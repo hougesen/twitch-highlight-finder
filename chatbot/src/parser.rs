@@ -1,5 +1,5 @@
-use crossbeam_channel::Receiver;
-use mongodb::{bson::DateTime, options::InsertManyOptions, sync::Database};
+use async_channel::Receiver;
+use mongodb::{bson::DateTime, options::InsertManyOptions, Database};
 
 #[derive(serde::Serialize)]
 struct TwitchChatMessage {
@@ -9,7 +9,10 @@ struct TwitchChatMessage {
     timestamp: DateTime,
 }
 
-pub fn message_parser_thread(db_client: Database, message_rx: Receiver<(String, DateTime)>) -> ! {
+pub async fn message_parser_thread(
+    db_client: Database,
+    message_rx: Receiver<(String, DateTime)>,
+) -> ! {
     let mut parsed_messages: Vec<TwitchChatMessage> = Vec::new();
 
     let collection = db_client.collection::<TwitchChatMessage>("twitch_messages");
@@ -18,29 +21,32 @@ pub fn message_parser_thread(db_client: Database, message_rx: Receiver<(String, 
 
     let mut last_saved = std::time::Instant::now();
 
-    message_rx.iter().for_each(|(m, t)| {
-        if let Some(parsed_message) = parse_message(m, t) {
-            parsed_messages.push(parsed_message);
+    while !message_rx.is_closed() {
+        if let Ok((m, t)) = message_rx.recv().await {
+            if let Some(parsed_message) = parse_message(m, t) {
+                parsed_messages.push(parsed_message);
+            }
+
+            if !parsed_messages.is_empty() && last_saved.elapsed().as_secs() > 30 {
+                last_saved = std::time::Instant::now();
+
+                println!(
+                    "{} Save messages: {}",
+                    parsed_messages[parsed_messages.len() - 1].timestamp,
+                    parsed_messages.len()
+                );
+
+                collection
+                    .insert_many(&parsed_messages, Some(insert_options.clone()))
+                    .await
+                    .ok();
+
+                parsed_messages = Vec::new();
+            } else if last_saved.elapsed().as_secs() > 30 {
+                println!("{} seconds since last save", last_saved.elapsed().as_secs());
+            }
         }
-
-        if !parsed_messages.is_empty() && last_saved.elapsed().as_secs() > 30 {
-            last_saved = std::time::Instant::now();
-
-            println!(
-                "{} Save messages: {}",
-                parsed_messages[parsed_messages.len() - 1].timestamp,
-                parsed_messages.len()
-            );
-
-            collection
-                .insert_many(&parsed_messages, Some(insert_options.clone()))
-                .ok();
-
-            parsed_messages = Vec::new();
-        } else if last_saved.elapsed().as_secs() > 30 {
-            println!("{} seconds since last save", last_saved.elapsed().as_secs());
-        }
-    });
+    }
 
     panic!("Somehow out of message_parser_thread?");
 }

@@ -1,5 +1,4 @@
-use crossbeam_channel::unbounded;
-use dotenv::dotenv;
+use async_channel::unbounded;
 use mongodb::bson::DateTime;
 
 use crate::chat::socket_thread;
@@ -10,18 +9,17 @@ mod chat;
 mod db;
 mod parser;
 
-fn main() -> Result<(), tungstenite::Error> {
+#[tokio::main]
+async fn main() -> Result<(), tungstenite::Error> {
     println!("Starting Twitch Chat Collector");
 
-    dotenv().ok();
+    let db_client = get_db_client().await.unwrap();
 
-    let db_client = get_db_client();
-
-    let channel_queue = get_channel_queue(&db_client);
+    let channel_queue = get_channel_queue(&db_client).await;
 
     let (message_tx, message_rx) = unbounded::<(String, DateTime)>();
 
-    std::thread::spawn(|| socket_thread(channel_queue, message_tx));
+    tokio::spawn(async move { socket_thread(channel_queue, message_tx).await });
 
-    message_parser_thread(db_client, message_rx);
+    message_parser_thread(db_client, message_rx).await
 }

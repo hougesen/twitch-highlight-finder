@@ -1,17 +1,22 @@
-use crossbeam_channel::Sender;
+use async_channel::Sender;
 use mongodb::bson::DateTime;
-use tungstenite::{stream::MaybeTlsStream, Message, WebSocket};
-use url::Url;
+use tungstenite::{http::Uri, stream::MaybeTlsStream, Message, WebSocket};
 
-pub fn socket_thread(
+fn connect_to_twitch_wss(
+) -> Result<WebSocket<MaybeTlsStream<std::net::TcpStream>>, tungstenite::Error> {
+    let (mut socket, _response) =
+        tungstenite::connect("wss://irc-ws.chat.twitch.tv:443".parse::<Uri>().unwrap())?;
+
+    login_to_twitch(&mut socket)?;
+
+    Ok(socket)
+}
+
+pub async fn socket_thread(
     channel_queue: Vec<Message>,
     message_tx: Sender<(String, DateTime)>,
 ) -> Result<(), tungstenite::Error> {
-    let twitch_wss_uri = Url::parse("wss://irc-ws.chat.twitch.tv:443").unwrap();
-
-    let (mut socket, _response) = tungstenite::connect(&twitch_wss_uri)?;
-
-    login_to_twitch(&mut socket)?;
+    let mut socket = connect_to_twitch_wss()?;
 
     join_channels(&mut socket, &channel_queue);
     socket.write_pending()?;
@@ -30,21 +35,22 @@ pub fn socket_thread(
                         socket.write_pending().ok();
                     } else {
                         // NOTE: no reason to waste time checking if succesful
-                        message_tx.try_send((message_text, timestamp)).ok();
+                        message_tx.send((message_text, timestamp)).await;
                     }
                 }
             }
             Err(error) => match error {
                 tungstenite::Error::ConnectionClosed => {
                     println!("tungstenite::Error::ConnectionClosed error {}", error);
-                    let (socket2, _response) = tungstenite::connect(&twitch_wss_uri)?;
-                    socket = socket2;
-                    login_to_twitch(&mut socket)?;
+
+                    socket = connect_to_twitch_wss()?;
+
                     println!("Done reconnecting");
+
                     join_channels(&mut socket, &channel_queue);
                     socket.write_pending()?;
                 }
-                //tungstenite::Error::AlreadyClosed => todo!(),
+                // tungstenite::Error::AlreadyClosed => todo!(),
                 // tungstenite::Error::Io(_) => todo!(),
                 // tungstenite::Error::Tls(_) => todo!(),
                 // tungstenite::Error::Capacity(_) => todo!(),
