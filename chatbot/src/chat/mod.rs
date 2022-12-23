@@ -2,6 +2,8 @@ use async_channel::Sender;
 use mongodb::bson::DateTime;
 use tungstenite::{http::Uri, stream::MaybeTlsStream, Message, WebSocket};
 
+use crate::database::{get_channel_queue, get_db_client};
+
 fn connect_to_twitch_wss(
 ) -> Result<WebSocket<MaybeTlsStream<std::net::TcpStream>>, tungstenite::Error> {
     let (mut socket, _response) =
@@ -12,10 +14,13 @@ fn connect_to_twitch_wss(
     Ok(socket)
 }
 
-pub async fn socket_thread(
-    channel_queue: Vec<Message>,
+pub async fn chat_listener(
     message_tx: Sender<(String, DateTime)>,
 ) -> Result<(), tungstenite::Error> {
+    let db_client = get_db_client().await.unwrap();
+
+    let channel_queue = get_channel_queue(&db_client).await;
+
     let mut socket = connect_to_twitch_wss()?;
 
     join_channels(&mut socket, &channel_queue);
@@ -35,7 +40,7 @@ pub async fn socket_thread(
                         socket.write_pending().ok();
                     } else {
                         // NOTE: no reason to waste time checking if succesful
-                        message_tx.send((message_text, timestamp)).await;
+                        message_tx.send((message_text, timestamp)).await.ok();
                     }
                 }
             }

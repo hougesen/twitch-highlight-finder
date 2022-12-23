@@ -8,6 +8,8 @@ authors = ["Mads Hougesen <mads@mhouge.dk>"]
 
 [dependencies]
 async-channel = "1.8.0"
+aws-config = "0.52.0"
+aws-sdk-sqs = "0.22.0"
 dotenv = "0.15.0"
 mongodb = "2.3.1"
 serde = { version = "1.0.147", features = ["derive"] }
