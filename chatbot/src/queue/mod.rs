@@ -22,7 +22,7 @@ pub async fn create_queue(
 #[derive(serde::Serialize)]
 pub struct QueueMessage {
     pub message: String,
-    timestamp: DateTime,
+    pub timestamp: DateTime,
 }
 
 pub async fn message_queuer(
@@ -38,19 +38,19 @@ pub async fn message_queuer(
     let queue_url = queue.queue_url().unwrap();
 
     while !message_rx.is_closed() {
-        if let Ok((m, t)) = message_rx.recv().await {
-            sqs_client
-                .send_message()
-                .queue_url(queue_url)
-                .message_body(
-                    serde_json::to_string(&QueueMessage {
-                        message: m,
-                        timestamp: t,
-                    })
-                    .unwrap(),
-                )
-                .send()
-                .await?;
+        if let Ok((message, timestamp)) = message_rx.recv().await {
+            if message.contains("PRIVMSG") {
+                sqs_client
+                    .send_message()
+                    .queue_url(queue_url)
+                    .message_body(
+                        serde_json::to_string(&QueueMessage { message, timestamp }).unwrap(),
+                    )
+                    .send()
+                    .await?;
+            } else {
+                println!("UNKNOWN MESSAGE: {:?}", message.trim());
+            }
         }
     }
 
