@@ -1,7 +1,7 @@
 use futures::{future, StreamExt};
 use mongodb::{bson::oid::ObjectId, change_stream::event::OperationType};
 
-mod analyzer;
+mod analysis;
 mod db;
 
 #[tokio::main]
@@ -36,7 +36,7 @@ async fn handle_new_message(
     message_id: ObjectId,
     message: String,
 ) -> Result<mongodb::results::UpdateResult, mongodb::error::Error> {
-    let analyzed_message = analyzer::analyze_message(message, emote_scores);
+    let analyzed_message = analysis::analyze_message(message, emote_scores);
 
     db::save_message_score(
         db_client.clone(),

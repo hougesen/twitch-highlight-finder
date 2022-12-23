@@ -47,12 +47,11 @@ pub fn analyze_message(
 #[cfg(test)]
 mod tests {
     use super::calculate_message_score;
+    use super::tokenize_message;
 
     #[test]
     fn test_tokenize_message() {
         use dashmap::DashMap;
-
-        use crate::scores::tokenize_message;
 
         let emote_scores = DashMap::new();
 
