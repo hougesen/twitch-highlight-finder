@@ -1,7 +1,7 @@
 use mongodb::bson::DateTime;
 
 #[derive(serde::Serialize)]
-pub struct TwitchChatMessage {
+pub struct ParsedMessage {
     pub channel: String,
     pub sender: String,
     pub message: String,
@@ -9,7 +9,7 @@ pub struct TwitchChatMessage {
 }
 
 /// :caveaio!caveaio@caveaio.tmi.twitch.tv PRIVMSG #hougesen :test
-pub fn parse_message(msg: String, timestamp: DateTime) -> Option<TwitchChatMessage> {
+pub fn parse_message(msg: String, timestamp: DateTime) -> Option<ParsedMessage> {
     if msg.contains("PRIVMSG") {
         let (sender, message) = msg.trim().split_once('!').unwrap();
 
@@ -19,7 +19,7 @@ pub fn parse_message(msg: String, timestamp: DateTime) -> Option<TwitchChatMessa
 
         let (_, channel) = remaining.split_once("PRIVMSG #").unwrap();
 
-        return Some(TwitchChatMessage {
+        return Some(ParsedMessage {
             channel: channel.trim().to_lowercase(),
             sender: sender.trim().to_lowercase(),
             timestamp,

@@ -1,6 +1,4 @@
-use aws_sdk_sqs as sqs;
-use mongodb::bson::DateTime;
-use sqs::{
+use aws_sdk_sqs::{
     error::{CreateQueueError, ReceiveMessageError},
     model::QueueAttributeName,
     output::{CreateQueueOutput, ReceiveMessageOutput},
@@ -10,17 +8,17 @@ use sqs::{
 #[derive(Debug, serde::Deserialize)]
 pub struct QueueMessage {
     pub message: String,
-    pub timestamp: DateTime,
+    pub timestamp: mongodb::bson::DateTime,
 }
 
-async fn setup_sqs_client() -> sqs::Client {
+async fn setup_sqs_client() -> aws_sdk_sqs::Client {
     let config = aws_config::load_from_env().await;
 
-    sqs::Client::new(&config)
+    aws_sdk_sqs::Client::new(&config)
 }
 
 pub struct Queue {
-    sqs_client: sqs::Client,
+    sqs_client: aws_sdk_sqs::Client,
     queue_url: String,
 }
 
@@ -91,13 +89,9 @@ impl Queue {
         let mut parsed_messages = Vec::new();
 
         if let Ok(message_output) = queue_output {
-            println!("read_output: {:#?}", message_output);
-
             if let Some(unparsed_messages) = message_output.messages() {
                 for unparsed_message in unparsed_messages {
                     if let Some(parsed_message) = self.parse_json_message(unparsed_message.body()) {
-                        println!("parsed_message: {:#?}", parsed_message);
-
                         parsed_messages.push(parsed_message)
                     }
                 }
@@ -121,8 +115,6 @@ impl Queue {
                 .unwrap()
                 .get(&QueueAttributeName::ApproximateNumberOfMessages)
             {
-                println!("count: {:#?}", count);
-
                 return count.parse::<u32>().unwrap_or_default();
             }
         }

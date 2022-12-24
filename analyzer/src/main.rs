@@ -1,3 +1,9 @@
+use crate::db::{
+    emotes::get_emote_scores,
+    get_db_client,
+    messages::{ensure_message_index_exists, save_message_batch, TwitchChatMessage},
+};
+
 mod analysis;
 mod db;
 mod parser;
@@ -5,15 +11,15 @@ mod queue;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let db_client = db::get_db_client().await.unwrap();
+    let db_client = get_db_client().await.unwrap();
 
-    let emote_scores = db::get_emote_scores(&db_client).await.into_read_only();
+    let emote_scores = get_emote_scores(&db_client).await.into_read_only();
 
     if emote_scores.is_empty() {
         panic!("Emote score is empty!")
     }
 
-    db::ensure_message_index_exists(&db_client).await?;
+    ensure_message_index_exists(&db_client).await?;
 
     let mut queue = queue::Queue::new(None).await;
 
@@ -22,7 +28,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     queue.set_queue_url(created_queue.queue_url().unwrap());
 
     while !queue.empty().await {
-        let mut finished_messages: Vec<db::TwitchChatMessage> = Vec::new();
+        let mut finished_messages: Vec<TwitchChatMessage> = Vec::new();
 
         if let Ok(queue_messages) = queue.get_message_batch(Some(10)).await {
             for queue_message in queue_messages {
@@ -32,7 +38,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     let analysed_message =
                         analysis::analyze_message(parsed_message.message, &emote_scores);
 
-                    finished_messages.push(db::TwitchChatMessage {
+                    finished_messages.push(TwitchChatMessage {
                         channel: parsed_message.channel,
                         sender: parsed_message.sender,
                         message: analysed_message.message,
@@ -44,9 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
 
         if !finished_messages.is_empty() {
-            db::save_message_batch(&db_client, finished_messages)
-                .await
-                .ok();
+            save_message_batch(&db_client, finished_messages).await.ok();
         }
     }
 
