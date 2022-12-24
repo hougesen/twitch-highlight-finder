@@ -13,7 +13,7 @@ pub fn tokenize_message(
     tokens
 }
 
-pub fn calculate_message_score(tokens: &Vec<(String, u8)>) -> u8 {
+pub fn calculate_message_score(tokens: &Vec<(String, u8)>) -> f64 {
     let mut modifier = 0;
 
     for (_token, score) in tokens {
@@ -22,13 +22,13 @@ pub fn calculate_message_score(tokens: &Vec<(String, u8)>) -> u8 {
         }
     }
 
-    100 + modifier
+    f64::from(100 + modifier) / 100.0
 }
 
 pub struct AnalysedMessage {
     pub message: String,
     pub tokens: Vec<(String, u8)>,
-    pub message_score: u8,
+    pub message_score: f64,
 }
 
 pub fn analyze_message(
@@ -47,12 +47,11 @@ pub fn analyze_message(
 #[cfg(test)]
 mod tests {
     use super::calculate_message_score;
+    use super::tokenize_message;
 
     #[test]
     fn test_tokenize_message() {
         use dashmap::DashMap;
-
-        use crate::scores::tokenize_message;
 
         let emote_scores = DashMap::new();
 
@@ -96,7 +95,7 @@ mod tests {
     #[test]
     fn test_calculate_message_score() {
         assert_eq!(
-            100,
+            100.0,
             calculate_message_score(&vec![("without".to_string(), 0)])
         )
     }
