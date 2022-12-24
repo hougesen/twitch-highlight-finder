@@ -1,6 +1,6 @@
 use aws_sdk_sqs::{
     error::{CreateQueueError, ReceiveMessageError},
-    model::QueueAttributeName,
+    model::{Message, QueueAttributeName},
     output::{CreateQueueOutput, ReceiveMessageOutput},
     types::SdkError,
 };
@@ -35,10 +35,10 @@ impl Queue {
     pub async fn get_message_batch(
         &self,
         max_messages: Option<i32>,
-    ) -> Result<Vec<QueueMessage>, Box<dyn std::error::Error>> {
+    ) -> Result<Vec<(QueueMessage, String)>, Box<dyn std::error::Error>> {
         let queue_output = self.read_queue(max_messages).await;
 
-        Ok(self.extract_queue_messages(queue_output))
+        Ok(self.extract_queue_messages(queue_output).await)
     }
 
     pub async fn create_queue(
@@ -72,8 +72,8 @@ impl Queue {
             .await
     }
 
-    fn parse_json_message(&self, message: Option<&str>) -> Option<QueueMessage> {
-        if let Some(json) = message {
+    fn parse_json_message(&self, message: &Message) -> Option<QueueMessage> {
+        if let Some(json) = message.body() {
             if let Ok(parsed) = serde_json::from_str::<QueueMessage>(json) {
                 return Some(parsed);
             }
@@ -82,17 +82,22 @@ impl Queue {
         None
     }
 
-    fn extract_queue_messages(
+    async fn extract_queue_messages(
         &self,
         queue_output: Result<ReceiveMessageOutput, SdkError<ReceiveMessageError>>,
-    ) -> Vec<QueueMessage> {
+    ) -> Vec<(QueueMessage, String)> {
         let mut parsed_messages = Vec::new();
 
         if let Ok(message_output) = queue_output {
             if let Some(unparsed_messages) = message_output.messages() {
                 for unparsed_message in unparsed_messages {
-                    if let Some(parsed_message) = self.parse_json_message(unparsed_message.body()) {
-                        parsed_messages.push(parsed_message)
+                    let message_handle = unparsed_message.receipt_handle().unwrap().to_string();
+
+                    if let Some(parsed_message) = self.parse_json_message(unparsed_message) {
+                        parsed_messages.push((parsed_message, message_handle));
+                    } else {
+                        // remove all "dead" messages
+                        self.acknowledge_message(message_handle).await.ok();
                     }
                 }
             }
@@ -115,6 +120,7 @@ impl Queue {
                 .unwrap()
                 .get(&QueueAttributeName::ApproximateNumberOfMessages)
             {
+                println!("MESSAGE COUNT: {}", count);
                 return count.parse::<u32>().unwrap_or_default();
             }
         }
@@ -124,5 +130,20 @@ impl Queue {
 
     pub async fn empty(&self) -> bool {
         self.size().await == 0
+    }
+
+    pub async fn acknowledge_message(
+        &self,
+        message_handle: String,
+    ) -> Result<
+        aws_sdk_sqs::output::DeleteMessageOutput,
+        SdkError<aws_sdk_sqs::error::DeleteMessageError>,
+    > {
+        self.sqs_client
+            .delete_message()
+            .queue_url(self.queue_url.clone())
+            .receipt_handle(message_handle)
+            .send()
+            .await
     }
 }

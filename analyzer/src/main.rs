@@ -11,7 +11,7 @@ mod queue;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let db_client = get_db_client().await.unwrap();
+    let db_client = get_db_client().await?;
 
     let emote_scores = get_emote_scores(&db_client).await.into_read_only();
 
@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut finished_messages: Vec<TwitchChatMessage> = Vec::new();
 
         if let Ok(queue_messages) = queue.get_message_batch(Some(10)).await {
-            for queue_message in queue_messages {
+            for (queue_message, message_handle) in queue_messages {
                 if let Some(parsed_message) =
                     parser::parse_message(queue_message.message, queue_message.timestamp)
                 {
@@ -46,6 +46,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         timestamp: parsed_message.timestamp,
                     })
                 }
+
+                queue.acknowledge_message(message_handle).await.ok();
             }
         }
 
