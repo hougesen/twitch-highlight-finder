@@ -25,8 +25,6 @@ pub fn parse_message(msg: String, timestamp: DateTime) -> Option<TwitchChatMessa
             timestamp,
             message: chat_message.trim().to_string(),
         });
-    } else {
-        println!("UNKNOWN MESSAGE: {:?}", msg.trim());
     }
 
     None

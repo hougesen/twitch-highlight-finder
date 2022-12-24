@@ -1,11 +1,10 @@
-use futures::{future, StreamExt};
-use mongodb::{bson::oid::ObjectId, change_stream::event::OperationType};
-
 mod analysis;
 mod db;
+mod parser;
+mod queue;
 
 #[tokio::main]
-async fn main() -> Result<(), mongodb::error::Error> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let db_client = db::get_db_client().await.unwrap();
 
     let emote_scores = db::get_emote_scores(&db_client).await.into_read_only();
@@ -14,109 +13,44 @@ async fn main() -> Result<(), mongodb::error::Error> {
         panic!("Emote score is empty!")
     }
 
-    println!("analyze_pending");
+    db::ensure_message_index_exists(&db_client).await?;
 
-    analyze_pending(db_client.clone(), emote_scores.clone())
-        .await
-        .expect("Something went wrong analyzing past messages");
+    let mut queue = queue::Queue::new(None).await;
 
-    // println!("watch_messages");
+    let created_queue = queue.create_queue("unparsed-messages").await?;
 
-    // NOTE: disabled since this service is run as a cronjob
-    // watch_messages(db_client, emote_scores)
-    //    .await
-    //    .expect("Something went wrong watching messages");
+    queue.set_queue_url(created_queue.queue_url().unwrap());
 
-    Ok(())
-}
+    while !queue.empty().await {
+        let mut finished_messages: Vec<db::TwitchChatMessage> = Vec::new();
 
-async fn handle_new_message(
-    db_client: &mongodb::Database,
-    emote_scores: &dashmap::ReadOnlyView<String, u8>,
-    message_id: ObjectId,
-    message: String,
-) -> Result<mongodb::results::UpdateResult, mongodb::error::Error> {
-    let analyzed_message = analysis::analyze_message(message, emote_scores);
+        if let Ok(queue_messages) = queue.get_message_batch(Some(10)).await {
+            for queue_message in queue_messages {
+                if let Some(parsed_message) =
+                    parser::parse_message(queue_message.message, queue_message.timestamp)
+                {
+                    let analysed_message =
+                        analysis::analyze_message(parsed_message.message, &emote_scores);
 
-    db::save_message_score(
-        db_client.clone(),
-        message_id,
-        analyzed_message.message_score,
-    )
-    .await
-}
-
-async fn analyze_pending(
-    db_client: mongodb::Database,
-    emote_scores: dashmap::ReadOnlyView<String, u8>,
-) -> Result<(), mongodb::error::Error> {
-    let messages = db::get_pending_chat_messages(&db_client).await;
-
-    println!("message len: {}", messages.len());
-    let mut raw_futs = vec![];
-
-    for m in messages {
-        raw_futs.push(handle_new_message(
-            &db_client,
-            &emote_scores,
-            m.id,
-            m.message,
-        ));
-    }
-
-    let unpin_futs: Vec<_> = raw_futs.into_iter().map(Box::pin).collect();
-
-    let mut futs = unpin_futs;
-
-    while !futs.is_empty() {
-        match future::select_all(futs).await {
-            (Ok(_), _index, remaining) => {
-                if remaining.len() % 100 == 0 {
-                    println!("remaining: {}", remaining.len());
+                    finished_messages.push(db::TwitchChatMessage {
+                        channel: parsed_message.channel,
+                        sender: parsed_message.sender,
+                        message: analysed_message.message,
+                        message_score: analysed_message.message_score,
+                        timestamp: parsed_message.timestamp,
+                    })
                 }
-
-                futs = remaining;
             }
-            (Err(_e), _index, remaining) => {
-                if remaining.len() % 100 == 0 {
-                    println!("remaining: {}", remaining.len());
-                }
+        }
 
-                futs = remaining;
-            }
+        if !finished_messages.is_empty() {
+            db::save_message_batch(&db_client, finished_messages)
+                .await
+                .ok();
         }
     }
 
-    Ok(())
-}
-
-async fn watch_messages(
-    db_client: mongodb::Database,
-    emote_scores: dashmap::ReadOnlyView<String, u8>,
-) -> Result<(), mongodb::error::Error> {
-    let collection = db_client.collection::<db::TwitchChatMessage>("twitch_messages");
-
-    let pipeline = vec![mongodb::bson::doc! {
-        "$match": {
-            "message_score": {
-                "$exists": false
-            }
-        }
-    }];
-
-    let mut change_stream = collection.watch(pipeline, None).await?;
-
-    while let Some(event) = change_stream.next().await.transpose()? {
-        println!("operation performed: {:?}", event.operation_type);
-
-        if event.operation_type == OperationType::Insert {
-            if let Some(document) = event.full_document {
-                handle_new_message(&db_client, &emote_scores, document.id, document.message)
-                    .await
-                    .ok();
-            }
-        }
-    }
+    println!("queue is empty now");
 
     Ok(())
 }
