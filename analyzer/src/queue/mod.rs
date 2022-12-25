@@ -86,7 +86,7 @@ impl Queue {
         &self,
         queue_output: Result<ReceiveMessageOutput, SdkError<ReceiveMessageError>>,
     ) -> Vec<(QueueMessage, String)> {
-        let mut parsed_messages = Vec::new();
+        let mut parsed_messages = Vec::with_capacity(10);
 
         if let Ok(message_output) = queue_output {
             if let Some(unparsed_messages) = message_output.messages() {
