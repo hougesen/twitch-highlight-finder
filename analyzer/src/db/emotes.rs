@@ -16,16 +16,18 @@ pub struct TwitchEmote {
 pub async fn get_emote_scores(db_client: &mongodb::Database) -> DashMap<String, u8> {
     let collection = db_client.collection::<TwitchEmote>("emotes");
 
-    let emote_scores: DashMap<String, u8> = DashMap::new();
+    let mut emote_scores: DashMap<String, u8> = DashMap::new();
 
     // TODO: convert to aggregate to reduce data size?
     if let Ok(cursor) = collection.find(None, None).await {
         if let Ok(emotes) = cursor.try_collect::<Vec<TwitchEmote>>().await {
+            emote_scores.try_reserve(emotes.len()).ok();
+
             for emote in emotes {
                 emote_scores.insert(emote.name, emote.score.unwrap_or(1));
             }
         };
     }
-
+    emote_scores.shrink_to_fit();
     emote_scores
 }
