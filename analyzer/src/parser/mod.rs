@@ -9,9 +9,9 @@ pub struct ParsedMessage {
 }
 
 /// :caveaio!caveaio@caveaio.tmi.twitch.tv PRIVMSG #hougesen :test
-pub fn parse_message(msg: String, timestamp: DateTime) -> Option<ParsedMessage> {
-    if msg.contains("PRIVMSG") {
-        let (sender, message) = msg.trim().split_once('!').unwrap();
+pub fn parse_message(unparsed_message: String, timestamp: DateTime) -> Option<ParsedMessage> {
+    if unparsed_message.contains("PRIVMSG") {
+        let (sender, message) = unparsed_message.trim().split_once('!').unwrap();
 
         let sender = sender.replace(':', "");
 
