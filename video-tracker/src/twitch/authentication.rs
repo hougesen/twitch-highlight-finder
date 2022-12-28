@@ -1,4 +1,6 @@
-use crate::{error::TwitchError, utility::unwrap_twitch_response};
+use crate::error::TwitchError;
+
+use super::unwrap_twitch_response;
 
 #[derive(Debug, serde::Deserialize)]
 pub struct GetTwitchAccessTokenResponse {
@@ -29,7 +31,7 @@ pub async fn authenticate(
 
 #[cfg(test)]
 mod authenticate {
-    use crate::{authentication::authenticate, errors::TwitchError};
+    use crate::{error::TwitchError, twitch::authentication::authenticate};
 
     #[tokio::test]
     async fn valid_token() {
