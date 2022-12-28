@@ -50,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             url: video.url,
                             streamed_at: created_at,
                             ended_at: DateTime::from_millis(
-                                created_at.timestamp_millis() + i64::from(video_duration),
+                                created_at.timestamp_millis() + (i64::from(video_duration) * 1000),
                             ),
                             video_duration,
                             analyzed: false,
