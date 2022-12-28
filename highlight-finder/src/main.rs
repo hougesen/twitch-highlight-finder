@@ -21,13 +21,19 @@ async fn analyze_vod(
     db_client: &mongodb::Database,
     vod: TwitchVodModel,
 ) -> Result<(), mongodb::error::Error> {
-    db::twitch_messages::get_vod_message_scores(
+    if let Ok(scores) = db::twitch_messages::get_vod_message_scores(
         db_client,
         &vod.channel_name,
         vod.streamed_at,
         vod.ended_at,
     )
-    .await?;
+    .await
+    {
+        if scores.is_empty() {
+            db::twitch_vods::mark_as_analyzed(db_client, vod.id).await?;
+            return Ok(());
+        }
+    }
 
     Ok(())
 }

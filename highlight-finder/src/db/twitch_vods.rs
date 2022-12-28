@@ -1,7 +1,12 @@
-use mongodb::{bson::doc, options::FindOneOptions, results::CreateIndexResult};
+use mongodb::{
+    bson::{doc, oid::ObjectId},
+    options::FindOneOptions,
+};
 
 #[derive(serde::Serialize, serde::Deserialize, Debug)]
 pub struct TwitchVodModel {
+    #[serde(rename = "_id")]
+    pub id: ObjectId,
     pub vod_id: String,
     pub stream_id: String,
     pub user_id: String,
@@ -13,25 +18,6 @@ pub struct TwitchVodModel {
     pub ended_at: mongodb::bson::DateTime,
     pub video_duration: u32,
     pub analyzed: bool,
-}
-
-pub async fn ensure_video_index_exists(
-    db_client: &mongodb::Database,
-) -> Result<CreateIndexResult, mongodb::error::Error> {
-    db_client
-        .collection::<TwitchVodModel>("twitch_vods")
-        .create_index(
-            mongodb::IndexModel::builder()
-                .keys(doc! { "vod_id": 1 })
-                .options(
-                    mongodb::options::IndexOptions::builder()
-                        .unique(true)
-                        .build(),
-                )
-                .build(),
-            None,
-        )
-        .await
 }
 
 pub async fn get_pending_vod(db_client: &mongodb::Database) -> Option<TwitchVodModel> {
@@ -49,4 +35,22 @@ pub async fn get_pending_vod(db_client: &mongodb::Database) -> Option<TwitchVodM
     }
 
     None
+}
+
+pub async fn mark_as_analyzed(
+    db_client: &mongodb::Database,
+    document_id: ObjectId,
+) -> Result<mongodb::results::UpdateResult, mongodb::error::Error> {
+    db_client
+        .collection::<TwitchVodModel>("twitch_vods")
+        .update_one(
+            doc! { "_id": document_id},
+            doc! {
+                "$set": {
+                    "analyzed": true
+                }
+            },
+            None,
+        )
+        .await
 }

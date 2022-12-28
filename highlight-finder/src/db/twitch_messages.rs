@@ -1,7 +1,4 @@
-use futures::stream::TryStreamExt;
 use futures::StreamExt;
-use mongodb::Cursor;
-use mongodb::*;
 use mongodb::{
     bson::{doc, DateTime},
     options::AggregateOptions,
