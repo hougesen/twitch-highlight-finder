@@ -22,7 +22,7 @@ pub fn calculate_message_score(tokens: &Vec<(String, u8)>) -> f64 {
         }
     }
 
-    f64::from(100 + modifier) / 100.0
+    f64::from(10 + modifier) / 10.0
 }
 
 pub struct AnalysedMessage {
