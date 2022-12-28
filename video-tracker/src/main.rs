@@ -46,6 +46,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             user_id: video.user_id,
                             language: video.language,
                             stream_id: video.stream_id,
+                            channel_name: video.user_login,
                             title: video.title,
                             url: video.url,
                             streamed_at: created_at,

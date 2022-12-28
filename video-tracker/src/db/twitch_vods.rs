@@ -5,6 +5,7 @@ pub struct TwitchVodModel {
     pub vod_id: String,
     pub stream_id: String,
     pub user_id: String,
+    pub channel_name: String,
     pub language: String,
     pub title: String,
     pub url: String,
