@@ -15,8 +15,7 @@ pub struct TwitchChatMessage {
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct VodMessageScore {
-    #[serde(default, rename = "_id")]
-    timestamp: String,
+    timestamp: DateTime,
     count: u64,
     total_message_score: f64,
 }
@@ -47,6 +46,15 @@ pub async fn get_vod_message_scores(
                 },
                 "count": { "$sum": 1 },
                 "total_message_score": { "$sum": "$message_score" }
+            }
+        },
+        doc! {
+            "$addFields": {
+                "timestamp": {
+                    "$dateFromString": {
+                        "dateString": "$_id"
+                    }
+                }
             }
         },
     ];
