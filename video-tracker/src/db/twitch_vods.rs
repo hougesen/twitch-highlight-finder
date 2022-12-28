@@ -37,7 +37,7 @@ pub async fn save_vods(
     db_client: &mongodb::Database,
     vods: Vec<TwitchVodModel>,
 ) -> Result<mongodb::results::InsertManyResult, mongodb::error::Error> {
-    ensure_video_index_exists(&db_client).await?;
+    ensure_video_index_exists(db_client).await?;
 
     db_client
         .collection("twitch_vods")

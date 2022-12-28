@@ -53,7 +53,7 @@ pub fn calculate_video_duration(duration: &str) -> u32 {
     let mut current_value = String::new();
 
     for c in duration.chars() {
-        if c.is_digit(10) {
+        if c.is_ascii_digit() {
             current_value.push(c);
         } else {
             match c {
