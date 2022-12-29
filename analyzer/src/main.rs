@@ -27,7 +27,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     queue.set_queue_url(created_queue.queue_url().unwrap());
 
-    while !queue.empty().await {
+    loop {
         let mut finished_messages: Vec<TwitchChatMessage> = Vec::with_capacity(10);
 
         if let Ok(queue_messages) = queue.get_message_batch(Some(10)).await {
@@ -51,9 +51,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
 
-        if !finished_messages.is_empty() {
-            save_message_batch(&db_client, finished_messages).await.ok();
+        if finished_messages.is_empty() {
+            break;
         }
+
+        save_message_batch(&db_client, finished_messages).await.ok();
     }
 
     println!("queue is empty now");
