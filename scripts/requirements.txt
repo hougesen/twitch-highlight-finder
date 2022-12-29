@@ -1,0 +1,6 @@
+matplotlib
+pymongo
+typing
+Pillow
+numpy
+python-dotenv

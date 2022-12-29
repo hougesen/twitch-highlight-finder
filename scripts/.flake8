@@ -1,0 +1,12 @@
+[flake8]
+
+max-line-length = 120
+exclude = .git
+max-complexity = 10
+ignore = 
+      # empty file at eof
+      W391
+      # line break before binary operator
+      W503
+      # formatting around colon in list
+      E203
