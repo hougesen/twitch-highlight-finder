@@ -15,8 +15,6 @@ pub mod twitch;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    println!("Hello, world!");
-
     let db_client = db::get_db_client().await?;
 
     let channel_queue = db::channels::fetch_channels(&db_client).await?;
@@ -39,7 +37,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         let video_duration = calculate_video_duration(&video.duration);
 
                         // TODO: serialize directly into mongodb::bson::DateTime
-                        let created_at = DateTime::parse_rfc3339_str(video.created_at).unwrap();
+                        let created_at = DateTime::parse_rfc3339_str(video.created_at)?;
 
                         vods.push(TwitchVodModel {
                             vod_id: video.id,
