@@ -26,7 +26,7 @@ pub async fn chat_listener(
     join_channels(&mut socket, &channel_queue);
     socket.write_pending()?;
 
-    loop {
+    while !message_tx.is_closed() {
         match socket.read_message() {
             Ok(message) => {
                 let timestamp = DateTime::now();
@@ -69,6 +69,10 @@ pub async fn chat_listener(
             },
         }
     }
+
+    eprintln!("outside of chat_listener loop");
+
+    Ok(())
 }
 
 fn login_to_twitch(
