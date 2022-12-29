@@ -1,6 +1,5 @@
-use db::twitch_vods::TwitchVodModel;
-
 mod db;
+mod finder;
 
 #[tokio::main]
 async fn main() -> Result<(), mongodb::error::Error> {
@@ -11,28 +10,7 @@ async fn main() -> Result<(), mongodb::error::Error> {
     if let Some(vod) = db::twitch_vods::get_pending_vod(&db_client).await {
         println!("vod: {:#?}", vod);
 
-        analyze_vod(&db_client, vod).await?;
-    }
-
-    Ok(())
-}
-
-async fn analyze_vod(
-    db_client: &mongodb::Database,
-    vod: TwitchVodModel,
-) -> Result<(), mongodb::error::Error> {
-    if let Ok(scores) = db::twitch_messages::get_vod_message_scores(
-        db_client,
-        &vod.channel_name,
-        vod.streamed_at,
-        vod.ended_at,
-    )
-    .await
-    {
-        if scores.is_empty() {
-            db::twitch_vods::mark_as_analyzed(db_client, vod.id).await?;
-            return Ok(());
-        }
+        finder::analyze_vod(&db_client, vod).await?;
     }
 
     Ok(())

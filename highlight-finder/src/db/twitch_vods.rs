@@ -43,7 +43,9 @@ pub async fn get_all_pendings_vods(db_client: &mongodb::Database) -> Vec<TwitchV
         .collection::<TwitchVodModel>("twitch_vods")
         .find(
             doc! { "analyzed": false },
-            FindOptions::builder().sort(doc! {"streamed_at":-1}).build(),
+            FindOptions::builder()
+                .sort(doc! { "streamed_at": 1 })
+                .build(),
         )
         .await
     {

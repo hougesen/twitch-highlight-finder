@@ -15,9 +15,9 @@ pub struct TwitchChatMessage {
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct VodMessageScore {
-    timestamp: DateTime,
-    count: u64,
-    total_message_score: f64,
+    pub timestamp: DateTime,
+    pub count: u64,
+    pub total_message_score: f64,
 }
 
 pub async fn get_vod_message_scores(
