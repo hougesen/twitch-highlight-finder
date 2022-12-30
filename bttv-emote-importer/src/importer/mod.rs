@@ -11,6 +11,26 @@ struct BetterTTVResponse {
     emote: BetterTTVEmote,
 }
 
+pub async fn fetch_global_emotes() -> Vec<TwitchEmote> {
+    let mut emotes = Vec::new();
+
+    let http_client = reqwest::Client::new();
+
+    if let Ok(response) = http_client
+        .get("https://api.betterttv.net/3/cached/emotes/global")
+        .send()
+        .await
+    {
+        if let Ok(parsed_response) = response.json::<Vec<BetterTTVEmote>>().await {
+            for emote in parsed_response {
+                emotes.push(transform_emote(emote))
+            }
+        }
+    }
+
+    emotes
+}
+
 pub async fn fetch_emotes(max: usize) -> Vec<TwitchEmote> {
     let mut emotes = Vec::new();
 
@@ -35,6 +55,8 @@ pub async fn fetch_emotes(max: usize) -> Vec<TwitchEmote> {
                 }
                 Err(_) => break,
             }
+        } else {
+            break;
         }
     }
 
