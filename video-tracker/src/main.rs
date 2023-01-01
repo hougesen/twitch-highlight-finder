@@ -61,7 +61,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("vods: {}", vods.len());
 
         if !vods.is_empty() {
-            db::twitch_vods::save_vods(&db_client, vods).await?;
+            db::twitch_vods::save_vods(&db_client, vods).await.ok();
         }
     }
 

@@ -5,6 +5,8 @@ mod finder;
 async fn main() -> Result<(), mongodb::error::Error> {
     let db_client = db::get_db_client().await?;
 
+    db::clips::ensure_clip_unique_index_exists(&db_client).await?;
+
     let vods = db::twitch_vods::get_all_pendings_vods(&db_client).await;
 
     for vod in vods {

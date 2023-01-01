@@ -1,5 +1,7 @@
 use std::collections::{BTreeSet, HashMap};
 
+use mongodb::bson::DateTime;
+
 use crate::db::{
     clips::Clip,
     twitch_messages::{get_vod_message_scores, VodMessageScore},
@@ -29,7 +31,7 @@ pub async fn analyze_vod(
 const TIME_BUCKET_SIZE: i64 = 10_000;
 
 /// TODO: switch to sliding window?
-pub fn create_time_buckets<T: IntoIterator<Item = VodMessageScore>>(
+fn create_time_buckets<T: IntoIterator<Item = VodMessageScore>>(
     message_scores: T,
 ) -> HashMap<i64, f64> {
     let mut time_buckets = HashMap::new();
@@ -47,7 +49,7 @@ pub fn create_time_buckets<T: IntoIterator<Item = VodMessageScore>>(
     time_buckets
 }
 
-pub fn find_outlier_timestamps(original_bucket: &HashMap<i64, f64>, average: f64) -> BTreeSet<i64> {
+fn find_outlier_timestamps(original_bucket: &HashMap<i64, f64>, average: f64) -> BTreeSet<i64> {
     let mut values = Vec::new();
 
     for s in original_bucket.values() {
@@ -73,7 +75,7 @@ pub fn find_outlier_timestamps(original_bucket: &HashMap<i64, f64>, average: f64
     outliers
 }
 
-pub fn calculate_time_buckets_average(time_bucket: &HashMap<i64, f64>) -> f64 {
+fn calculate_time_buckets_average(time_bucket: &HashMap<i64, f64>) -> f64 {
     let mut total = 0.;
 
     for s in time_bucket.values() {
@@ -83,7 +85,12 @@ pub fn calculate_time_buckets_average(time_bucket: &HashMap<i64, f64>) -> f64 {
     total / time_bucket.len() as f64
 }
 
-pub fn create_clips(mut timestamps: BTreeSet<i64>, vod: &TwitchVodModel) -> Vec<Clip> {
+#[inline]
+fn timestamp_to_video_timestamp(timestamp: i64, start_time: &DateTime) -> i64 {
+    timestamp - start_time.timestamp_millis()
+}
+
+fn create_clips(mut timestamps: BTreeSet<i64>, vod: &TwitchVodModel) -> Vec<Clip> {
     let mut clips = Vec::new();
 
     while !timestamps.is_empty() {
@@ -99,8 +106,8 @@ pub fn create_clips(mut timestamps: BTreeSet<i64>, vod: &TwitchVodModel) -> Vec<
             timestamps.remove(&start_time);
 
             clips.push(Clip {
-                start_time,
-                end_time,
+                start_time: timestamp_to_video_timestamp(start_time, &vod.streamed_at),
+                end_time: timestamp_to_video_timestamp(end_time, &vod.streamed_at),
                 user_id: vod.user_id.clone(),
                 vod_id: vod.vod_id.clone(),
             });
