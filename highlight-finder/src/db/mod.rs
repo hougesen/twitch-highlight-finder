@@ -1,3 +1,4 @@
+pub mod clips;
 pub mod twitch_messages;
 pub mod twitch_vods;
 
