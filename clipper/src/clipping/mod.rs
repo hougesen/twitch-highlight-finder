@@ -19,3 +19,21 @@ pub async fn get_download_url(video_url: &str) -> Option<String> {
 
     None
 }
+
+pub async fn download_video(
+    download_url: &str,
+    file_name: &str,
+    start: i64,
+    duration: i64,
+) -> Result<std::process::Output, std::io::Error> {
+    tokio::process::Command::new("ffmpeg")
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .args(["-ss", &start.to_string()])
+        .args(["-t", &duration.to_string()])
+        .arg("-y")
+        .args(["-i", download_url, &format!("5second-{file_name}.mp4")])
+        .kill_on_drop(true)
+        .output()
+        .await
+}
