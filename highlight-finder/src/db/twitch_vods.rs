@@ -4,7 +4,7 @@ use mongodb::{
     options::{FindOneOptions, FindOptions},
 };
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[derive(serde::Serialize, serde::Deserialize)]
 pub struct TwitchVodModel {
     #[serde(rename = "_id")]
     pub id: ObjectId,
