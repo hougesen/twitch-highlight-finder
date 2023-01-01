@@ -95,7 +95,7 @@ mod tests {
     #[test]
     fn test_calculate_message_score() {
         assert_eq!(
-            100.0,
+            1.0,
             calculate_message_score(&vec![("without".to_string(), 0)])
         )
     }

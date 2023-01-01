@@ -56,6 +56,7 @@ impl Queue {
         self.queue_url = queue_url.into()
     }
 
+    #[inline]
     async fn read_queue(
         &self,
         max_messages: Option<i32>,
@@ -72,9 +73,13 @@ impl Queue {
             .await
     }
 
-    fn parse_json_message(&self, message: &Message) -> Option<QueueMessage> {
+    #[inline]
+    fn parse_json_message<T: for<'a> serde::Deserialize<'a>>(
+        &self,
+        message: &Message,
+    ) -> Option<T> {
         if let Some(json) = message.body() {
-            if let Ok(parsed) = serde_json::from_str::<QueueMessage>(json) {
+            if let Ok(parsed) = serde_json::from_str::<T>(json) {
                 return Some(parsed);
             }
         }
@@ -93,11 +98,13 @@ impl Queue {
                 for unparsed_message in unparsed_messages {
                     let message_handle = unparsed_message.receipt_handle().unwrap().to_string();
 
-                    if let Some(parsed_message) = self.parse_json_message(unparsed_message) {
+                    if let Some(parsed_message) =
+                        self.parse_json_message::<QueueMessage>(unparsed_message)
+                    {
                         parsed_messages.push((parsed_message, message_handle));
                     } else {
                         // remove all "dead" messages
-                        self.acknowledge_message(message_handle).await.ok();
+                        self.acknowledge_message(&message_handle).await;
                     }
                 }
             }
@@ -106,6 +113,7 @@ impl Queue {
         parsed_messages
     }
 
+    #[allow(unused)]
     pub async fn size(&self) -> u32 {
         if let Ok(attributes_output) = self
             .sqs_client
@@ -128,22 +136,19 @@ impl Queue {
         0
     }
 
+    #[allow(unused)]
     pub async fn empty(&self) -> bool {
         self.size().await == 0
     }
 
-    pub async fn acknowledge_message(
-        &self,
-        message_handle: String,
-    ) -> Result<
-        aws_sdk_sqs::output::DeleteMessageOutput,
-        SdkError<aws_sdk_sqs::error::DeleteMessageError>,
-    > {
+    #[inline]
+    pub async fn acknowledge_message(&self, message_handle: &str) -> bool {
         self.sqs_client
             .delete_message()
-            .queue_url(self.queue_url.clone())
+            .queue_url(&self.queue_url)
             .receipt_handle(message_handle)
             .send()
             .await
+            .is_ok()
     }
 }
