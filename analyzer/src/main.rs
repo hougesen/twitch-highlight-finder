@@ -1,7 +1,7 @@
 use crate::db::{
     emotes::get_emote_scores,
     get_db_client,
-    messages::{ensure_message_index_exists, save_message_batch, TwitchChatMessage},
+    messages::{save_message_batch, TwitchChatMessage},
 };
 
 mod analysis;
@@ -9,26 +9,65 @@ mod db;
 mod parser;
 mod queue;
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let db_client = get_db_client().await?;
+    let db_client = get_db_client().await.unwrap();
 
-    let emote_scores = get_emote_scores(&db_client).await.into_read_only();
+    let emote_scores = std::sync::Arc::new(
+        get_emote_scores(&db_client.database("highlights"))
+            .await
+            .into_read_only(),
+    );
 
     if emote_scores.is_empty() {
         panic!("Emote score is empty!")
     }
 
-    ensure_message_index_exists(&db_client).await?;
+    let mut queue = queue::Queue::new(None).await;
+
+    let created_queue = queue.create_queue("unparsed-messages").await.unwrap();
+
+    queue.set_queue_url(created_queue.queue_url().unwrap());
+
+    let mut threads = Vec::new();
+
+    for id in 0..std::thread::available_parallelism().map_or(1, usize::from) {
+        let emote_scores_ref = std::sync::Arc::clone(&emote_scores);
+
+        let db_client_ref = db_client.clone();
+
+        let handle = tokio::spawn(job(id, db_client_ref, emote_scores_ref));
+
+        threads.push(handle);
+    }
+
+    for thread in threads {
+        thread.await.ok();
+    }
+
+    println!("queue is empty now");
+
+    Ok(())
+}
+
+async fn job(
+    id: usize,
+    db_client: mongodb::Client,
+    emote_scores: std::sync::Arc<dashmap::ReadOnlyView<String, u8>>,
+) -> Result<(), mongodb::error::Error> {
+    println!("job: {id}");
+
+    let database = db_client.database("highlights");
 
     let mut queue = queue::Queue::new(None).await;
 
-    let created_queue = queue.create_queue("unparsed-messages").await?;
+    let created_queue = queue.create_queue("unparsed-messages").await.unwrap();
 
     queue.set_queue_url(created_queue.queue_url().unwrap());
 
     loop {
         let mut finished_messages: Vec<TwitchChatMessage> = Vec::with_capacity(10);
+        let mut receipt_handles = Vec::with_capacity(10);
 
         if let Ok(queue_messages) = queue.get_message_batch(Some(10)).await {
             for (queue_message, message_handle) in queue_messages {
@@ -45,9 +84,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         message_score: analysed_message.message_score,
                         timestamp: parsed_message.timestamp,
                     })
-                }
+                };
 
-                queue.acknowledge_message(message_handle).await.ok();
+                receipt_handles.push(message_handle);
+            }
+        }
+
+        if !receipt_handles.is_empty() {
+            for handle in receipt_handles {
+                queue.acknowledge_message(&handle).await;
             }
         }
 
@@ -55,10 +100,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             break;
         }
 
-        save_message_batch(&db_client, finished_messages).await.ok();
+        save_message_batch(&database, finished_messages).await.ok();
     }
-
-    println!("queue is empty now");
 
     Ok(())
 }
