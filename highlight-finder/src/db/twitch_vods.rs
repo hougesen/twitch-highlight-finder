@@ -1,6 +1,6 @@
 use futures::stream::TryStreamExt;
 use mongodb::{
-    bson::{doc, oid::ObjectId},
+    bson::{doc, oid::ObjectId, DateTime},
     options::{FindOneOptions, FindOptions},
 };
 
@@ -28,9 +28,7 @@ pub async fn get_pending_vod(
         .collection::<TwitchVodModel>("twitch_vods")
         .find_one(
             doc! { "analyzed": false },
-            FindOneOptions::builder()
-                .sort(doc! { "streamed_at": 1 })
-                .build(),
+            FindOneOptions::builder().build(),
         )
         .await
 }
@@ -38,12 +36,7 @@ pub async fn get_pending_vod(
 pub async fn get_all_pendings_vods(db_client: &mongodb::Database) -> Vec<TwitchVodModel> {
     if let Ok(cursor) = db_client
         .collection::<TwitchVodModel>("twitch_vods")
-        .find(
-            doc! { "analyzed": false },
-            FindOptions::builder()
-                .sort(doc! { "streamed_at": 1 })
-                .build(),
-        )
+        .find(doc! { "analyzed": false }, FindOptions::builder().build())
         .await
     {
         if let Ok(vods) = cursor.try_collect::<Vec<TwitchVodModel>>().await {
@@ -64,7 +57,8 @@ pub async fn mark_as_analyzed(
             doc! { "_id": document_id },
             doc! {
                 "$set": {
-                    "analyzed": true
+                    "analyzed": true,
+                    "last_updated": DateTime::now()
                 }
             },
             None,
