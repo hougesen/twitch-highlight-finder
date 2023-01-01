@@ -1,6 +1,10 @@
-use mongodb::{bson::doc, results::CreateIndexResult};
+use mongodb::{
+    bson::doc,
+    options::{IndexOptions, InsertManyOptions},
+    results::{CreateIndexResult, InsertManyResult},
+};
 
-#[derive(serde::Serialize, serde::Deserialize)]
+#[derive(serde::Serialize)]
 pub struct TwitchVodModel {
     pub vod_id: String,
     pub stream_id: String,
@@ -15,7 +19,7 @@ pub struct TwitchVodModel {
     pub analyzed: bool,
 }
 
-pub async fn ensure_video_index_exists(
+async fn ensure_video_index_exists(
     db_client: &mongodb::Database,
 ) -> Result<CreateIndexResult, mongodb::error::Error> {
     db_client
@@ -23,11 +27,7 @@ pub async fn ensure_video_index_exists(
         .create_index(
             mongodb::IndexModel::builder()
                 .keys(doc! { "vod_id": 1 })
-                .options(
-                    mongodb::options::IndexOptions::builder()
-                        .unique(true)
-                        .build(),
-                )
+                .options(IndexOptions::builder().unique(true).build())
                 .build(),
             None,
         )
@@ -36,17 +36,15 @@ pub async fn ensure_video_index_exists(
 
 pub async fn save_vods(
     db_client: &mongodb::Database,
-    vods: Vec<TwitchVodModel>,
-) -> Result<mongodb::results::InsertManyResult, mongodb::error::Error> {
+    vods: impl IntoIterator<Item = TwitchVodModel>,
+) -> Result<InsertManyResult, mongodb::error::Error> {
     ensure_video_index_exists(db_client).await?;
 
     db_client
         .collection("twitch_vods")
         .insert_many(
             vods,
-            mongodb::options::InsertManyOptions::builder()
-                .ordered(Some(false))
-                .build(),
+            InsertManyOptions::builder().ordered(Some(false)).build(),
         )
         .await
 }

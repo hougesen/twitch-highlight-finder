@@ -1,7 +1,7 @@
 use mongodb::{
     bson::doc,
     options::{IndexOptions, InsertManyOptions},
-    results::{CreateIndexResult, InsertManyResult},
+    results::{CreateIndexesResult, InsertManyResult},
     {Collection, Database, IndexModel},
 };
 
@@ -23,24 +23,26 @@ pub async fn get_db_client() -> Result<Database, mongodb::error::Error> {
 
 pub async fn ensure_unique_index_exists(
     collection: &Collection<TwitchEmote>,
-) -> Result<CreateIndexResult, mongodb::error::Error> {
-    let index = IndexModel::builder()
-        .keys(doc! { "emote_id": 1 })
-        .options(IndexOptions::builder().unique(Some(true)).build())
-        .build();
-
-    collection.create_index(index, None).await;
-
-    let index = IndexModel::builder()
-        .keys(doc! { "name": 1 })
-        .options(IndexOptions::builder().unique(Some(true)).build())
-        .build();
-
-    collection.create_index(index, None).await
+) -> Result<CreateIndexesResult, mongodb::error::Error> {
+    collection
+        .create_indexes(
+            [
+                IndexModel::builder()
+                    .keys(doc! { "emote_id": 1 })
+                    .options(IndexOptions::builder().unique(Some(true)).build())
+                    .build(),
+                IndexModel::builder()
+                    .keys(doc! { "name": 1 })
+                    .options(IndexOptions::builder().unique(Some(true)).build())
+                    .build(),
+            ],
+            None,
+        )
+        .await
 }
 
 pub async fn save_emotes(
-    emotes: Vec<TwitchEmote>,
+    emotes: impl IntoIterator<Item = TwitchEmote>,
 ) -> Result<InsertManyResult, mongodb::error::Error> {
     let db = get_db_client().await?;
 

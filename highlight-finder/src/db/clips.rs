@@ -1,4 +1,8 @@
-use mongodb::{bson::doc, options::InsertManyOptions, results::InsertManyResult};
+use mongodb::{
+    bson::doc,
+    options::{IndexOptions, InsertManyOptions},
+    results::InsertManyResult,
+};
 
 #[derive(serde::Serialize)]
 pub struct Clip {
@@ -10,7 +14,7 @@ pub struct Clip {
 
 pub async fn save_clips(
     db_client: &mongodb::Database,
-    clips: Vec<Clip>,
+    clips: impl IntoIterator<Item = Clip>,
 ) -> Result<InsertManyResult, mongodb::error::Error> {
     let collection = db_client.collection::<Clip>("clips");
 
@@ -26,17 +30,8 @@ pub async fn ensure_clip_unique_index_exists(
         .collection::<Clip>("clips")
         .create_index(
             mongodb::IndexModel::builder()
-                .keys(doc! {
-                    "user_id": 1,
-                    "vod_id": 1,
-                    "start_time": 1,
-                    "end_time": 1
-                })
-                .options(
-                    mongodb::options::IndexOptions::builder()
-                        .unique(true)
-                        .build(),
-                )
+                .keys(doc! { "user_id": 1, "vod_id": 1, "start_time": 1, "end_time": 1 })
+                .options(IndexOptions::builder().unique(true).build())
                 .build(),
             None,
         )

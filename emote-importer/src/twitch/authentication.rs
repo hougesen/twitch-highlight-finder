@@ -8,7 +8,7 @@ struct GetTwitchAccessTokenResponse {
 }
 
 /// Used for getting headers for authenticating with Twitch's API
-pub async fn authenticate_twitch() -> Result<HeaderMap, Box<dyn std::error::Error>> {
+pub async fn authenticate_twitch() -> Result<HeaderMap, reqwest::Error> {
     let client_id = dotenv::var("CLIENT_ID").expect("Missing env CLIENT_ID");
     let client_secret = dotenv::var("CLIENT_SECRET").expect("Missing env CLIENT_SECRET");
 
@@ -22,10 +22,10 @@ pub async fn authenticate_twitch() -> Result<HeaderMap, Box<dyn std::error::Erro
 
     headers.insert(
         "Authorization",
-        HeaderValue::from_str(&format!("Bearer {}", &parsed_token_req.access_token))?,
+        HeaderValue::from_str(&format!("Bearer {}", &parsed_token_req.access_token)).unwrap(),
     );
 
-    headers.insert("Client-Id", HeaderValue::from_str(&client_id)?);
+    headers.insert("Client-Id", HeaderValue::from_str(&client_id).unwrap());
 
     Ok(headers)
 }

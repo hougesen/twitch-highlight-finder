@@ -5,10 +5,9 @@ use tungstenite::Message;
 pub async fn get_db_client() -> Result<Database, mongodb::error::Error> {
     let mongo_uri = dotenv::var("MONGO_CONNECTION_URI").expect("Missing env MONGO_CONNECTION_URI");
 
-    match Client::with_uri_str(mongo_uri).await {
-        Ok(client) => Ok(client.database("highlights")),
-        Err(mongo_error) => Err(mongo_error),
-    }
+    let client = Client::with_uri_str(mongo_uri).await?;
+
+    Ok(client.database("highlights"))
 }
 
 struct ChannelCollection {

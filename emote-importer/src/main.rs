@@ -7,19 +7,15 @@ mod twitch;
 mod utility;
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
+async fn main() -> Result<(), reqwest::Error> {
     let http_client = build_http_client().await?;
 
-    let mut emotes = Vec::new();
-
-    if let Ok(mut global_emotes) = fetch_global_emotes(&http_client).await {
-        emotes.append(&mut global_emotes);
-    }
+    let mut emotes = fetch_global_emotes(&http_client).await.unwrap_or_default();
 
     // NOTE: if this was production code i would most likely implement this using a mqtt queue
     if let Ok(channel_ids) = fetch_channels().await {
         for channel_id in channel_ids {
-            if let Ok(mut channel_emotes) = fetch_channel_emotes(channel_id, &http_client).await {
+            if let Ok(mut channel_emotes) = fetch_channel_emotes(&channel_id, &http_client).await {
                 emotes.append(&mut channel_emotes);
             }
         }

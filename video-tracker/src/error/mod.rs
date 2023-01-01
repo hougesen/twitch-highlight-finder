@@ -5,7 +5,7 @@ pub struct TwitchErrorResponse {
     pub message: Option<String>,
 }
 
-pub(super) fn unwrap_twitch_error(error: TwitchErrorResponse) -> TwitchError {
+pub fn unwrap_twitch_error(error: TwitchErrorResponse) -> TwitchError {
     let formatted_message = format!(
         "{} {} {}",
         error.status,

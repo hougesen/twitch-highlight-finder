@@ -4,7 +4,7 @@ use crate::error::TwitchError;
 
 use super::unwrap_twitch_response;
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[derive(serde::Deserialize)]
 pub struct TwitchGetVideosData {
     /// vod_id
     pub id: String,
@@ -27,16 +27,16 @@ pub struct TwitchGetVideosData {
     pub muted_segments: Option<Vec<HashMap<String, i32>>>,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, Debug)]
+#[derive(serde::Deserialize)]
 pub struct TwitchGetVideosResponse {
     pub data: Vec<TwitchGetVideosData>,
 }
 
 pub async fn get_twitch_videos(
     http_client: &reqwest::Client,
-    user_id: String,
+    user_id: &str,
 ) -> Result<TwitchGetVideosResponse, TwitchError> {
-    let url = format!("https://api.twitch.tv/helix/videos?user_id={user_id}&first=20&type=archive");
+    let url = format!("https://api.twitch.tv/helix/videos?first=20&type=archive&user_id={user_id}");
 
     let response = http_client.get(url).send().await;
 

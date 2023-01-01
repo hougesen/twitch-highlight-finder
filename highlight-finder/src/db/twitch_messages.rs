@@ -4,7 +4,7 @@ use mongodb::{
     options::AggregateOptions,
 };
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(serde::Deserialize)]
 pub struct TwitchChatMessage {
     pub channel: String,
     pub sender: String,
@@ -13,7 +13,7 @@ pub struct TwitchChatMessage {
     pub message_score: f64,
 }
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(serde::Deserialize)]
 pub struct VodMessageScore {
     pub timestamp: DateTime,
     pub count: u64,
@@ -67,7 +67,7 @@ pub async fn get_vod_message_scores(
         )
         .await?;
 
-    let mut messages: Vec<VodMessageScore> = Vec::new();
+    let mut messages = Vec::new();
 
     while let Some(next_cursor) = cursor.next().await {
         if let Ok(result) = next_cursor {

@@ -9,9 +9,9 @@ use crate::{
     },
 };
 
-pub mod db;
-pub mod error;
-pub mod twitch;
+mod db;
+mod error;
+mod twitch;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -31,7 +31,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         let mut vods: Vec<TwitchVodModel> = Vec::new();
 
         for channel_id in channel_queue {
-            if let Ok(video_response) = get_twitch_videos(&http_client, channel_id).await {
+            if let Ok(video_response) = get_twitch_videos(&http_client, &channel_id).await {
                 if !video_response.data.is_empty() {
                     for video in video_response.data {
                         let video_duration = calculate_video_duration(&video.duration);

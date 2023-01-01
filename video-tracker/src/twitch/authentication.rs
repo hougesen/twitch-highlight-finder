@@ -9,8 +9,8 @@ pub struct GetTwitchAccessTokenResponse {
 }
 
 pub async fn authenticate(
-    client_id: &String,
-    client_secret: &String,
+    client_id: &str,
+    client_secret: &str,
 ) -> Result<GetTwitchAccessTokenResponse, TwitchError> {
     if client_id.is_empty() {
         return Err(TwitchError::MissingClientId);

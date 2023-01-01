@@ -42,7 +42,7 @@ pub async fn fetch_global_emotes(
 }
 
 pub async fn fetch_channel_emotes(
-    channel_id: String,
+    channel_id: &str,
     http_client: &reqwest::Client,
 ) -> Result<Vec<TwitchEmote>, reqwest::Error> {
     let url = format!("https://api.twitch.tv/helix/chat/emotes?broadcaster_id={channel_id}");
@@ -57,7 +57,7 @@ pub async fn fetch_channel_emotes(
                 emotes.push(TwitchEmote {
                     emote_id: emote.id,
                     name: emote.name,
-                    channel_id: Some(channel_id.clone()),
+                    channel_id: Some(channel_id.to_string()),
                 })
             }
         }

@@ -44,9 +44,13 @@ pub async fn unwrap_twitch_response<T: for<'a> serde::Deserialize<'a>>(
     }
 }
 
-pub fn build_query_params<T: ToString>(items: Vec<T>, seperator: &str) -> String {
+pub fn build_query_params<I, S>(items: I, seperator: &str) -> String
+where
+    I: IntoIterator<Item = S>,
+    S: ToString,
+{
     items
-        .iter()
+        .into_iter()
         .map(|n| n.to_string())
         .collect::<Vec<String>>()
         .join(seperator)
@@ -58,7 +62,7 @@ mod test_build_query_params {
 
     #[test]
     fn str_items() {
-        let items = vec!["mads", "matilde", "morten"];
+        let items = ["mads", "matilde", "morten"];
 
         assert_eq!(
             build_query_params(items, "&and="),
@@ -82,7 +86,7 @@ mod test_build_query_params {
 
     #[test]
     fn u8_items() {
-        let items = vec![1u8, 2u8, 3u8];
+        let items = std::collections::LinkedList::from([1u8, 2u8, 3u8]);
 
         assert_eq!(
             build_query_params(items, "&and="),
@@ -92,7 +96,7 @@ mod test_build_query_params {
 
     #[test]
     fn u16_items() {
-        let items = vec![1u16, 2u16, 3u16];
+        let items = std::collections::VecDeque::from([1u16, 2u16, 3u16]);
 
         assert_eq!(
             build_query_params(items, "&and="),
@@ -102,7 +106,7 @@ mod test_build_query_params {
 
     #[test]
     fn u32_items() {
-        let items = vec![1u32, 2u32, 3u32];
+        let items = [1u32, 2u32, 3u32];
 
         assert_eq!(
             build_query_params(items, "&and="),
@@ -112,7 +116,7 @@ mod test_build_query_params {
 
     #[test]
     fn u64_items() {
-        let items = vec![1u64, 2u64, 3u64];
+        let items = [1u64, 2u64, 3u64];
 
         assert_eq!(
             build_query_params(items, "&and="),

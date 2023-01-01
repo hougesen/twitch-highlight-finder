@@ -29,5 +29,6 @@ pub async fn get_emote_scores(db_client: &mongodb::Database) -> DashMap<String, 
         };
     }
     emote_scores.shrink_to_fit();
+
     emote_scores
 }

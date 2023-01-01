@@ -1,12 +1,12 @@
 use crate::db::TwitchEmote;
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(serde::Deserialize)]
 struct BetterTTVEmote {
     id: String,
     code: String,
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(serde::Deserialize)]
 struct BetterTTVResponse {
     emote: BetterTTVEmote,
 }
@@ -38,7 +38,7 @@ pub async fn fetch_emotes(max: usize) -> Vec<TwitchEmote> {
 
     while emotes.len() < max {
         let url = format!(
-            "https://api.betterttv.net/3/emotes/shared/top?offset={}&limit=100",
+            "https://api.betterttv.net/3/emotes/shared/top?limit=100&offset={}",
             emotes.len()
         );
 

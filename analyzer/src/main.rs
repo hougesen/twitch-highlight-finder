@@ -23,12 +23,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         panic!("Emote score is empty!")
     }
 
-    let mut queue = queue::Queue::new(None).await;
-
-    let created_queue = queue.create_queue("unparsed-messages").await.unwrap();
-
-    queue.set_queue_url(created_queue.queue_url().unwrap());
-
     let mut threads = Vec::new();
 
     for id in 0..std::thread::available_parallelism().map_or(1, usize::from) {
@@ -72,7 +66,7 @@ async fn job(
         if let Ok(queue_messages) = queue.get_message_batch(Some(10)).await {
             for (queue_message, message_handle) in queue_messages {
                 if let Some(parsed_message) =
-                    parser::parse_message(queue_message.message, queue_message.timestamp)
+                    parser::parse_message(&queue_message.message, queue_message.timestamp)
                 {
                     let analysed_message =
                         analysis::analyze_message(parsed_message.message, &emote_scores);

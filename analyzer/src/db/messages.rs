@@ -1,4 +1,8 @@
-use mongodb::bson::doc;
+use mongodb::{
+    bson::doc,
+    options::{IndexOptions, InsertManyOptions},
+    results::{CreateIndexResult, InsertManyResult},
+};
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct TwitchChatMessage {
@@ -11,36 +15,30 @@ pub struct TwitchChatMessage {
 
 pub async fn save_message_batch(
     db_client: &mongodb::Database,
-    messages: Vec<TwitchChatMessage>,
-) -> Result<mongodb::results::InsertManyResult, mongodb::error::Error> {
+    messages: impl IntoIterator<Item = TwitchChatMessage>,
+) -> Result<InsertManyResult, mongodb::error::Error> {
     let collection = db_client.collection::<TwitchChatMessage>("twitch_messages");
 
     collection
         .insert_many(
             messages,
-            mongodb::options::InsertManyOptions::builder()
-                .ordered(Some(false))
-                .build(),
+            InsertManyOptions::builder().ordered(Some(false)).build(),
         )
         .await
 }
 
 /// Have to make a unique compound index since SQS standard queues can have dupplications
-#[allow(unused)]
+#[allow(dead_code)]
 pub async fn ensure_message_index_exists(
     db_client: &mongodb::Database,
-) -> Result<mongodb::results::CreateIndexResult, mongodb::error::Error> {
+) -> Result<CreateIndexResult, mongodb::error::Error> {
     let collection = db_client.collection::<TwitchChatMessage>("twitch_messages");
 
     collection
         .create_index(
             mongodb::IndexModel::builder()
                 .keys(doc! { "channel": 1, "sender": 1, "message": 1, "timestamp": 1 })
-                .options(
-                    mongodb::options::IndexOptions::builder()
-                        .unique(true)
-                        .build(),
-                )
+                .options(IndexOptions::builder().unique(true).build())
                 .build(),
             None,
         )

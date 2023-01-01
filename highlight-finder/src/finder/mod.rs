@@ -10,7 +10,7 @@ use crate::db::{
 
 pub async fn analyze_vod(
     db_client: &mongodb::Database,
-    vod: TwitchVodModel,
+    vod: &TwitchVodModel,
 ) -> Result<Vec<Clip>, mongodb::error::Error> {
     let scores =
         get_vod_message_scores(db_client, &vod.channel_name, vod.streamed_at, vod.ended_at).await?;
@@ -19,34 +19,32 @@ pub async fn analyze_vod(
         return Ok(Vec::new());
     }
 
-    let bucket = create_time_buckets(scores);
+    let bucket = create_bucket(scores);
 
-    let average = calculate_time_buckets_average(&bucket);
+    let average = calculate_bucket_average(&bucket);
 
     let outliers = find_outlier_timestamps(&bucket, average);
 
-    Ok(create_clips(outliers, &vod))
+    Ok(create_clips(outliers, vod))
 }
 
-const TIME_BUCKET_SIZE: i64 = 10_000;
+const TIME_BUCKET_SIZE_MS: i64 = 10_000;
 
 /// TODO: switch to sliding window?
-fn create_time_buckets<T: IntoIterator<Item = VodMessageScore>>(
-    message_scores: T,
-) -> HashMap<i64, f64> {
-    let mut time_buckets = HashMap::new();
+fn create_bucket(message_scores: impl IntoIterator<Item = VodMessageScore>) -> HashMap<i64, f64> {
+    let mut bucket = HashMap::new();
 
     for score in message_scores {
         let timestamp_ms = score.timestamp.timestamp_millis();
-        let key = timestamp_ms - (timestamp_ms % TIME_BUCKET_SIZE);
+        let key = timestamp_ms - (timestamp_ms % TIME_BUCKET_SIZE_MS);
 
-        time_buckets
+        bucket
             .entry(key)
             .and_modify(|v| *v += score.total_message_score)
             .or_insert(score.total_message_score);
     }
 
-    time_buckets
+    bucket
 }
 
 fn find_outlier_timestamps(original_bucket: &HashMap<i64, f64>, average: f64) -> BTreeSet<i64> {
@@ -60,7 +58,7 @@ fn find_outlier_timestamps(original_bucket: &HashMap<i64, f64>, average: f64) ->
 
     let top_10_percentage = values[(values.len() / 10) * 9] as i64;
     let average_modifier = (average * 1.5) as i64;
-    let base = TIME_BUCKET_SIZE / 1000;
+    let base = TIME_BUCKET_SIZE_MS / 1000;
 
     let min = std::cmp::max(top_10_percentage, std::cmp::max(average_modifier, base)) as f64;
 
@@ -75,14 +73,14 @@ fn find_outlier_timestamps(original_bucket: &HashMap<i64, f64>, average: f64) ->
     outliers
 }
 
-fn calculate_time_buckets_average(time_bucket: &HashMap<i64, f64>) -> f64 {
+fn calculate_bucket_average(bucket: &HashMap<i64, f64>) -> f64 {
     let mut total = 0.;
 
-    for s in time_bucket.values() {
+    for s in bucket.values() {
         total += s;
     }
 
-    total / time_bucket.len() as f64
+    total / bucket.len() as f64
 }
 
 #[inline]
@@ -97,8 +95,8 @@ fn create_clips(mut timestamps: BTreeSet<i64>, vod: &TwitchVodModel) -> Vec<Clip
         if let Some(start_time) = timestamps.pop_first() {
             let mut end_time = start_time;
 
-            while timestamps.contains(&(end_time + TIME_BUCKET_SIZE)) {
-                end_time += TIME_BUCKET_SIZE;
+            while timestamps.contains(&(end_time + TIME_BUCKET_SIZE_MS)) {
+                end_time += TIME_BUCKET_SIZE_MS;
 
                 timestamps.remove(&end_time);
             }
@@ -123,13 +121,13 @@ mod tests {
 
     use crate::db::twitch_messages::VodMessageScore;
 
-    use super::{calculate_time_buckets_average, create_time_buckets};
+    use super::{calculate_bucket_average, create_bucket};
 
     #[test]
-    fn test_create_time_buckets() {
+    fn test_create_bucket() {
         assert_eq!(
             HashMap::from([(0, 1.0), (5000, 2.0), (10000, 1.0)]),
-            create_time_buckets([
+            create_bucket([
                 VodMessageScore {
                     timestamp: mongodb::bson::DateTime::from_millis(0),
                     count: 1,
@@ -156,7 +154,7 @@ mod tests {
         // test that order doesn't matter
         assert_eq!(
             HashMap::from([(5000, 3.2), (10000, 2.1)]),
-            create_time_buckets([
+            create_bucket([
                 VodMessageScore {
                     timestamp: mongodb::bson::DateTime::from_millis(10001),
                     count: 1,
@@ -187,15 +185,15 @@ mod tests {
     }
 
     #[test]
-    fn test_calculate_time_buckets_average_score() {
+    fn test_calculate_bucket_average_score() {
         assert_eq!(
             4.0 / 3.0,
-            calculate_time_buckets_average(&HashMap::from([(0, 1.0), (5000, 2.0), (10000, 1.0)]))
+            calculate_bucket_average(&HashMap::from([(0, 1.0), (5000, 2.0), (10000, 1.0)]))
         );
 
         assert_eq!(
             (123.12 + 21.121 + 512.12) / 3.0,
-            calculate_time_buckets_average(&HashMap::from([
+            calculate_bucket_average(&HashMap::from([
                 (0, 123.12),
                 (5000, 21.121),
                 (10000, 512.12)

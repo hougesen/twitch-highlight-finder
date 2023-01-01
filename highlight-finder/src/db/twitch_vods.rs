@@ -21,8 +21,10 @@ pub struct TwitchVodModel {
     pub analyzed: bool,
 }
 
-pub async fn get_pending_vod(db_client: &mongodb::Database) -> Option<TwitchVodModel> {
-    if let Ok(vod) = db_client
+pub async fn get_pending_vod(
+    db_client: &mongodb::Database,
+) -> Result<Option<TwitchVodModel>, mongodb::error::Error> {
+    db_client
         .collection::<TwitchVodModel>("twitch_vods")
         .find_one(
             doc! { "analyzed": false },
@@ -31,11 +33,6 @@ pub async fn get_pending_vod(db_client: &mongodb::Database) -> Option<TwitchVodM
                 .build(),
         )
         .await
-    {
-        return vod;
-    }
-
-    None
 }
 
 pub async fn get_all_pendings_vods(db_client: &mongodb::Database) -> Vec<TwitchVodModel> {
@@ -59,12 +56,12 @@ pub async fn get_all_pendings_vods(db_client: &mongodb::Database) -> Vec<TwitchV
 
 pub async fn mark_as_analyzed(
     db_client: &mongodb::Database,
-    document_id: ObjectId,
+    document_id: &ObjectId,
 ) -> Result<mongodb::results::UpdateResult, mongodb::error::Error> {
     db_client
         .collection::<TwitchVodModel>("twitch_vods")
         .update_one(
-            doc! { "_id": document_id},
+            doc! { "_id": document_id },
             doc! {
                 "$set": {
                     "analyzed": true

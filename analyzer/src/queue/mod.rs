@@ -19,7 +19,7 @@ async fn setup_sqs_client() -> aws_sdk_sqs::Client {
 
 pub struct Queue {
     sqs_client: aws_sdk_sqs::Client,
-    queue_url: String,
+    queue_url: Option<String>,
 }
 
 impl Queue {
@@ -28,15 +28,15 @@ impl Queue {
 
         Queue {
             sqs_client,
-            queue_url: queue_url.unwrap_or_default(),
+            queue_url,
         }
     }
 
     pub async fn get_message_batch(
         &self,
         max_messages: Option<i32>,
-    ) -> Result<Vec<(QueueMessage, String)>, Box<dyn std::error::Error>> {
-        let queue_output = self.read_queue(max_messages).await;
+    ) -> Result<Vec<(QueueMessage, String)>, SdkError<ReceiveMessageError>> {
+        let queue_output = self.read_queue(max_messages).await?;
 
         Ok(self.extract_queue_messages(queue_output).await)
     }
@@ -52,8 +52,8 @@ impl Queue {
             .await
     }
 
-    pub fn set_queue_url<S: Into<String>>(&mut self, queue_url: S) {
-        self.queue_url = queue_url.into()
+    pub fn set_queue_url(&mut self, queue_url: impl ToString) {
+        self.queue_url = Some(queue_url.to_string())
     }
 
     #[inline]
@@ -63,7 +63,7 @@ impl Queue {
     ) -> Result<ReceiveMessageOutput, SdkError<ReceiveMessageError>> {
         self.sqs_client
             .receive_message()
-            .set_queue_url(Some(self.queue_url.clone()))
+            .set_queue_url(self.queue_url.clone())
             .set_max_number_of_messages(if max_messages.is_some() {
                 max_messages
             } else {
@@ -89,23 +89,21 @@ impl Queue {
 
     async fn extract_queue_messages(
         &self,
-        queue_output: Result<ReceiveMessageOutput, SdkError<ReceiveMessageError>>,
+        queue_output: ReceiveMessageOutput,
     ) -> Vec<(QueueMessage, String)> {
         let mut parsed_messages = Vec::with_capacity(10);
 
-        if let Ok(message_output) = queue_output {
-            if let Some(unparsed_messages) = message_output.messages() {
-                for unparsed_message in unparsed_messages {
-                    let message_handle = unparsed_message.receipt_handle().unwrap().to_string();
+        if let Some(unparsed_messages) = queue_output.messages() {
+            for unparsed_message in unparsed_messages {
+                let message_handle = unparsed_message.receipt_handle().unwrap().to_string();
 
-                    if let Some(parsed_message) =
-                        self.parse_json_message::<QueueMessage>(unparsed_message)
-                    {
-                        parsed_messages.push((parsed_message, message_handle));
-                    } else {
-                        // remove all "dead" messages
-                        self.acknowledge_message(&message_handle).await;
-                    }
+                if let Some(parsed_message) =
+                    self.parse_json_message::<QueueMessage>(unparsed_message)
+                {
+                    parsed_messages.push((parsed_message, message_handle));
+                } else {
+                    // remove all "dead" messages
+                    self.acknowledge_message(&message_handle).await;
                 }
             }
         }
@@ -118,7 +116,7 @@ impl Queue {
         if let Ok(attributes_output) = self
             .sqs_client
             .get_queue_attributes()
-            .set_queue_url(Some(self.queue_url.clone()))
+            .set_queue_url(self.queue_url.clone())
             .set_attribute_names(Some(vec![QueueAttributeName::ApproximateNumberOfMessages]))
             .send()
             .await
@@ -129,6 +127,7 @@ impl Queue {
                 .get(&QueueAttributeName::ApproximateNumberOfMessages)
             {
                 println!("MESSAGE COUNT: {}", count);
+
                 return count.parse::<u32>().unwrap_or_default();
             }
         }
@@ -145,7 +144,7 @@ impl Queue {
     pub async fn acknowledge_message(&self, message_handle: &str) -> bool {
         self.sqs_client
             .delete_message()
-            .queue_url(&self.queue_url)
+            .set_queue_url(self.queue_url.clone())
             .receipt_handle(message_handle)
             .send()
             .await

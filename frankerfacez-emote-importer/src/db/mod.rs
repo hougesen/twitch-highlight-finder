@@ -17,7 +17,7 @@ pub async fn get_db_client() -> Result<Database, mongodb::error::Error> {
 }
 
 pub async fn save_emotes(
-    emotes: Vec<TwitchEmote>,
+    emotes: impl IntoIterator<Item = TwitchEmote>,
 ) -> Result<InsertManyResult, mongodb::error::Error> {
     let db = get_db_client().await?;
 
