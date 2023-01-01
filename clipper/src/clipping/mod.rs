@@ -27,12 +27,13 @@ pub async fn download_video(
     duration: i64,
 ) -> Result<std::process::Output, std::io::Error> {
     tokio::process::Command::new("ffmpeg")
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
         .args(["-ss", &start.to_string()])
         .args(["-t", &duration.to_string()])
+        .arg("-hide_banner")
+        .arg("-nostats")
+        .args(["-loglevel", "+error"])
         .arg("-y")
-        .args(["-i", download_url, &format!("5second-{file_name}.mp4")])
+        .args(["-i", download_url, &format!("{file_name}.mp4")])
         .kill_on_drop(true)
         .output()
         .await
