@@ -88,6 +88,13 @@ def plot_messages(
     ax.set_xlabel("minute")
     ax.set_ylabel("message count")
 
+    (w, h) = fig.get_size_inches()
+
+    fig.set_size_inches(w * 2, h * 2)
+
+    fig.align_xlabels()
+    fig.tight_layout()
+
     folder_path = os.path.realpath(
         os.path.join(os.path.dirname(__file__), "..", "graphs")
     )

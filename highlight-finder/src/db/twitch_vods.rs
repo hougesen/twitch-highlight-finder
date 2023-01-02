@@ -26,17 +26,14 @@ pub async fn get_pending_vod(
 ) -> Result<Option<TwitchVodModel>, mongodb::error::Error> {
     db_client
         .collection::<TwitchVodModel>("twitch_vods")
-        .find_one(
-            doc! { "analyzed": false },
-            FindOneOptions::builder().build(),
-        )
+        .find_one(doc! { "analyzed": false }, None)
         .await
 }
 
 pub async fn get_all_pendings_vods(db_client: &mongodb::Database) -> Vec<TwitchVodModel> {
     if let Ok(cursor) = db_client
         .collection::<TwitchVodModel>("twitch_vods")
-        .find(doc! { "analyzed": false }, FindOptions::builder().build())
+        .find(doc! { "analyzed": false }, None)
         .await
     {
         if let Ok(vods) = cursor.try_collect::<Vec<TwitchVodModel>>().await {

@@ -4,7 +4,7 @@ use aws_sdk_s3::{
     types::{ByteStream, SdkError},
 };
 
-pub const S3_BUCKET_NAME: &'static str = "twitch-highlight-finder-clips";
+pub const S3_BUCKET_NAME: &str = "twitch-highlight-finder-clips";
 
 pub async fn setup_s3() -> aws_sdk_s3::Client {
     aws_sdk_s3::Client::new(&aws_config::load_from_env().await)
