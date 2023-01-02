@@ -82,8 +82,10 @@ def plot_messages(
 
     ax.plot(x, y)
 
-    fig.suptitle(t="messages per minute", fontsize=16)
-    ax.set_title(label=f"{channel_name} - stream id {stream_id}", fontsize=10)
+    ax.set_title(label="messages per minute", fontsize=10, loc="left")
+    ax.set_title(
+        label=f"{channel_name} - stream id {stream_id}", fontsize=10, loc="center"
+    )
 
     ax.set_xlabel("minute")
     ax.set_ylabel("message count")
