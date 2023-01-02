@@ -120,6 +120,7 @@ fn create_clips(mut timestamps: BTreeSet<i64>, vod: &TwitchVodModel) -> Vec<Clip
                 end_time: timestamp_to_video_timestamp(end_time, &vod.streamed_at),
                 user_id: vod.user_id.clone(),
                 vod_id: vod.vod_id.clone(),
+                state: String::from("pending"),
             });
         }
     }

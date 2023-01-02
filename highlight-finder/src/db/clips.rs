@@ -8,6 +8,7 @@ use mongodb::{
 pub struct Clip {
     pub user_id: String,
     pub vod_id: String,
+    pub state: String,
     pub start_time: i64,
     pub end_time: i64,
 }
