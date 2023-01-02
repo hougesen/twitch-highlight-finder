@@ -19,3 +19,18 @@ pub async fn get_pending_clip(
         .find_one(doc! { "clip_url": { "$exists": false } }, None)
         .await
 }
+
+pub async fn set_video_url(
+    db_client: &mongodb::Database,
+    id: ObjectId,
+    video_url: String,
+) -> Result<mongodb::results::UpdateResult, mongodb::error::Error> {
+    db_client
+        .collection::<Clip>("clips")
+        .update_one(
+            doc! { "_id": id },
+            doc! { "$set": { "video_url": video_url } },
+            None,
+        )
+        .await
+}

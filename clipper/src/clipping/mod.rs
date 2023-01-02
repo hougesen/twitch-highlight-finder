@@ -26,6 +26,8 @@ pub async fn download_video(
     start: i64,
     duration: i64,
 ) -> Result<std::process::Output, std::io::Error> {
+    std::fs::create_dir_all("./clips/")?;
+
     tokio::process::Command::new("ffmpeg")
         .args(["-ss", &start.to_string()])
         .args(["-t", &duration.to_string()])
@@ -33,7 +35,7 @@ pub async fn download_video(
         .arg("-nostats")
         .args(["-loglevel", "+error"])
         .arg("-y")
-        .args(["-i", download_url, &format!("{file_name}.mp4")])
+        .args(["-i", download_url, &format!("clips/{file_name}.mp4")])
         .kill_on_drop(true)
         .output()
         .await
