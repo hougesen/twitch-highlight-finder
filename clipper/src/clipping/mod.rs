@@ -40,3 +40,7 @@ pub async fn download_video(
         .output()
         .await
 }
+
+pub async fn remove_video(file_name: &str) -> Result<(), std::io::Error> {
+    tokio::fs::remove_file(std::path::Path::new(&format!("clips/{file_name}.mp4"))).await
+}
