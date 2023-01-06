@@ -24,14 +24,9 @@ async function updateEmoteById(emoteId: string, score: number): Promise<IEmote |
         score,
     };
 
-    const emote = await db.collection<IEmote>('emotes').findOneAndUpdate(
-        {
-            _id: new ObjectId(emoteId),
-        },
-        {
-            $set: updatedEmote,
-        }
-    );
+    const emote = await db
+        .collection<IEmote>('emotes')
+        .findOneAndUpdate({ _id: new ObjectId(emoteId) }, { $set: updatedEmote });
 
     return emote?.value;
 }

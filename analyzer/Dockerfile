@@ -1,6 +1,6 @@
 ARG FUNCTION_DIR="/function"
 
-FROM rust:1.64-buster as builder
+FROM rust:1.65-buster as builder
 
 WORKDIR /build
 
