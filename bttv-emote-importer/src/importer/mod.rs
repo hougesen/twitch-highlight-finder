@@ -1,3 +1,5 @@
+use database::emotes::PartialTwitchEmote;
+
 #[derive(serde::Deserialize)]
 struct BetterTTVEmote {
     id: String,
@@ -17,7 +19,7 @@ pub struct TwitchEmote {
     pub channel_id: Option<String>,
 }
 
-pub async fn fetch_global_emotes() -> Vec<TwitchEmote> {
+pub async fn fetch_global_emotes() -> Vec<PartialTwitchEmote> {
     let mut emotes = Vec::new();
 
     let http_client = reqwest::Client::new();
@@ -37,7 +39,7 @@ pub async fn fetch_global_emotes() -> Vec<TwitchEmote> {
     emotes
 }
 
-pub async fn fetch_emotes(max: usize) -> Vec<TwitchEmote> {
+pub async fn fetch_emotes(max: usize) -> Vec<PartialTwitchEmote> {
     let mut emotes = Vec::new();
 
     let http_client = reqwest::Client::new();
@@ -70,8 +72,8 @@ pub async fn fetch_emotes(max: usize) -> Vec<TwitchEmote> {
 }
 
 #[inline]
-fn transform_emote(emote: BetterTTVEmote) -> TwitchEmote {
-    TwitchEmote {
+fn transform_emote(emote: BetterTTVEmote) -> PartialTwitchEmote {
+    PartialTwitchEmote {
         emote_id: emote.id,
         name: emote.code,
         channel_id: None,

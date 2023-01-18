@@ -17,6 +17,14 @@ pub struct TwitchEmote {
     pub score: Option<u8>,
 }
 
+#[derive(Debug, serde::Serialize)]
+pub struct PartialTwitchEmote {
+    pub emote_id: String,
+    /// The name of the emote. This is the name that viewers type in the chat window to get the emote to appear.
+    pub name: String,
+    pub channel_id: Option<String>,
+}
+
 pub async fn ensure_unique_index_exists(
     collection: &mongodb::Collection<TwitchEmote>,
 ) -> Result<CreateIndexesResult, mongodb::error::Error> {
@@ -37,13 +45,12 @@ pub async fn ensure_unique_index_exists(
         .await
 }
 
-pub async fn save_emotes<T: for<'a> serde::Serialize>(
+pub async fn save_emotes(
     db_client: &mongodb::Database,
-    emotes: impl IntoIterator<Item = T>,
+    emotes: impl IntoIterator<Item = PartialTwitchEmote>,
 ) -> Result<InsertManyResult, mongodb::error::Error> {
-    let collection = db_client.collection::<T>("emotes");
-
-    collection
+    db_client
+        .collection::<PartialTwitchEmote>("emotes")
         .insert_many(
             emotes,
             InsertManyOptions::builder().ordered(Some(false)).build(),

@@ -1,3 +1,4 @@
+pub mod channels;
 pub mod emotes;
 pub mod twitch_messages;
 
