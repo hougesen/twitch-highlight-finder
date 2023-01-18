@@ -71,6 +71,22 @@ impl Queue {
     }
 
     #[inline]
+    pub async fn queue_message(
+        &self,
+        message: impl Into<std::string::String>,
+    ) -> Result<
+        aws_sdk_sqs::output::SendMessageOutput,
+        SdkError<aws_sdk_sqs::error::SendMessageError>,
+    > {
+        self.sqs_client
+            .send_message()
+            .set_queue_url(self.queue_url.clone())
+            .message_body(message)
+            .send()
+            .await
+    }
+
+    #[inline]
     fn parse_json_message<T: for<'a> serde::Deserialize<'a>>(
         &self,
         message: &Message,
