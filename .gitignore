@@ -1,3 +1,5 @@
 .env
 target/
 **/.env
+node_modules
+target
