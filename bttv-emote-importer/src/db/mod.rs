@@ -5,14 +5,6 @@ use mongodb::{
     {Collection, Database, IndexModel},
 };
 
-#[derive(serde::Serialize)]
-pub struct TwitchEmote {
-    pub emote_id: String,
-    /// The name of the emote. This is the name that viewers type in the chat window to get the emote to appear.
-    pub name: String,
-    pub channel_id: Option<String>,
-}
-
 pub async fn get_db_client() -> Result<Database, mongodb::error::Error> {
     let mongo_uri = dotenv::var("MONGO_CONNECTION_URI").expect("Missing env MONGO_CONNECTION_URI");
 

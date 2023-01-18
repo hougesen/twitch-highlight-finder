@@ -253,7 +253,7 @@ checksum = "23d8666cb01533c39dde32bcbab8e227b4ed6679b2c925eba05feabea39508fb"
 
 [[package]]
 name = "database"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "dashmap",
  "futures",

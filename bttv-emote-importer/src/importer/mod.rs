@@ -1,5 +1,3 @@
-use crate::db::TwitchEmote;
-
 #[derive(serde::Deserialize)]
 struct BetterTTVEmote {
     id: String,
@@ -9,6 +7,14 @@ struct BetterTTVEmote {
 #[derive(serde::Deserialize)]
 struct BetterTTVResponse {
     emote: BetterTTVEmote,
+}
+
+#[derive(serde::Serialize)]
+pub struct TwitchEmote {
+    pub emote_id: String,
+    /// The name of the emote. This is the name that viewers type in the chat window to get the emote to appear.
+    pub name: String,
+    pub channel_id: Option<String>,
 }
 
 pub async fn fetch_global_emotes() -> Vec<TwitchEmote> {
