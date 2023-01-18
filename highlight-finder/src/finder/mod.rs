@@ -1,17 +1,16 @@
 use std::collections::{BTreeSet, HashMap};
 
-use mongodb::bson::DateTime;
-
-use crate::db::{
-    clips::Clip,
+use database::{
+    clips::PartialClip,
     twitch_messages::{get_vod_message_scores, VodMessageScore},
     twitch_vods::TwitchVodModel,
 };
+use mongodb::bson::DateTime;
 
 pub async fn analyze_vod(
     db_client: &mongodb::Database,
     vod: &TwitchVodModel,
-) -> Result<Vec<Clip>, mongodb::error::Error> {
+) -> Result<Vec<PartialClip>, mongodb::error::Error> {
     let scores =
         get_vod_message_scores(db_client, &vod.channel_name, vod.streamed_at, vod.ended_at).await?;
 
@@ -100,7 +99,7 @@ fn timestamp_to_video_timestamp(timestamp: i64, start_time: &DateTime) -> i64 {
     timestamp - start_time.timestamp_millis()
 }
 
-fn create_clips(mut timestamps: BTreeSet<i64>, vod: &TwitchVodModel) -> Vec<Clip> {
+fn create_clips(mut timestamps: BTreeSet<i64>, vod: &TwitchVodModel) -> Vec<PartialClip> {
     let mut clips = Vec::new();
 
     while !timestamps.is_empty() {
@@ -115,7 +114,7 @@ fn create_clips(mut timestamps: BTreeSet<i64>, vod: &TwitchVodModel) -> Vec<Clip
 
             timestamps.remove(&start_time);
 
-            clips.push(Clip {
+            clips.push(PartialClip {
                 start_time: timestamp_to_video_timestamp(start_time, &vod.streamed_at),
                 end_time: timestamp_to_video_timestamp(end_time, &vod.streamed_at),
                 user_id: vod.user_id.clone(),
@@ -132,7 +131,7 @@ fn create_clips(mut timestamps: BTreeSet<i64>, vod: &TwitchVodModel) -> Vec<Clip
 mod tests {
     use std::collections::HashMap;
 
-    use crate::db::twitch_messages::VodMessageScore;
+    use database::twitch_messages::VodMessageScore;
 
     use super::{calculate_weighted_bucket_average, create_bucket};
 

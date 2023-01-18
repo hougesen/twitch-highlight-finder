@@ -1,8 +1,5 @@
 use futures::stream::TryStreamExt;
-use mongodb::{
-    bson::{doc, oid::ObjectId, DateTime},
-    options::{FindOneOptions, FindOptions},
-};
+use mongodb::bson::{doc, oid::ObjectId, DateTime};
 
 #[derive(serde::Serialize, serde::Deserialize)]
 pub struct TwitchVodModel {

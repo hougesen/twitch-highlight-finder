@@ -1,11 +1,11 @@
 use mongodb::{
     bson::doc,
     options::{IndexOptions, InsertManyOptions},
-    results::InsertManyResult,
+    results::{CreateIndexResult, InsertManyResult},
 };
 
 #[derive(serde::Serialize)]
-pub struct Clip {
+pub struct PartialClip {
     pub user_id: String,
     pub vod_id: String,
     pub state: String,
@@ -15,9 +15,9 @@ pub struct Clip {
 
 pub async fn save_clips(
     db_client: &mongodb::Database,
-    clips: impl IntoIterator<Item = Clip>,
+    clips: impl IntoIterator<Item = PartialClip>,
 ) -> Result<InsertManyResult, mongodb::error::Error> {
-    let collection = db_client.collection::<Clip>("clips");
+    let collection = db_client.collection::<PartialClip>("clips");
 
     collection
         .insert_many(clips, InsertManyOptions::builder().ordered(false).build())
@@ -26,9 +26,9 @@ pub async fn save_clips(
 
 pub async fn ensure_clip_unique_index_exists(
     db_client: &mongodb::Database,
-) -> Result<mongodb::results::CreateIndexResult, mongodb::error::Error> {
+) -> Result<CreateIndexResult, mongodb::error::Error> {
     db_client
-        .collection::<Clip>("clips")
+        .collection::<PartialClip>("clips")
         .create_index(
             mongodb::IndexModel::builder()
                 .keys(doc! { "user_id": 1, "vod_id": 1, "start_time": 1, "end_time": 1 })

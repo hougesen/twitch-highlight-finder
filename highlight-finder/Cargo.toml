@@ -4,6 +4,7 @@ version = "0.1.1"
 edition = "2021"
 
 [dependencies]
+database = { path = "../lib/database" }
 dotenv = "0.15.0"
 futures = "0.3.25"
 mongodb = "2.3.1"
