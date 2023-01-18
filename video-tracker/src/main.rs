@@ -1,23 +1,28 @@
+use database::{
+    channels::get_channel_ids,
+    get_db_client,
+    twitch_vods::{save_vods, PartialTwitchVodModel},
+};
 use mongodb::bson::DateTime;
 
-use crate::{
-    db::twitch_vods::TwitchVodModel,
-    twitch::{
-        authentication::authenticate,
-        build_http_client,
-        videos::{calculate_video_duration, get_twitch_videos},
-    },
+use crate::twitch::{
+    authentication::authenticate,
+    build_http_client,
+    videos::{calculate_video_duration, get_twitch_videos},
 };
 
-mod db;
 mod error;
 mod twitch;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let db_client = db::get_db_client().await?;
+    let db_client = get_db_client(
+        &dotenv::var("MONGO_CONNECTION_URI").expect("Missing env MONGO_CONNECTION_URI"),
+    )
+    .await?
+    .database("highlights");
 
-    let channel_queue = db::channels::fetch_channels(&db_client).await?;
+    let channel_queue = get_channel_ids(&db_client).await?;
 
     if !channel_queue.is_empty() {
         let twitch_client_id = dotenv::var("CLIENT_ID").expect("ERROR: Missing CLIENT_ID env");
@@ -28,7 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         let http_client = build_http_client(&twitch_client_id, &twitch_token.access_token)?;
 
-        let mut vods: Vec<TwitchVodModel> = Vec::new();
+        let mut vods: Vec<PartialTwitchVodModel> = Vec::new();
 
         for channel_id in channel_queue {
             if let Ok(video_response) = get_twitch_videos(&http_client, &channel_id).await {
@@ -39,7 +44,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         // TODO: serialize directly into mongodb::bson::DateTime
                         let created_at = DateTime::parse_rfc3339_str(video.created_at)?;
 
-                        vods.push(TwitchVodModel {
+                        vods.push(PartialTwitchVodModel {
                             vod_id: video.id,
                             user_id: video.user_id,
                             language: video.language,
@@ -61,7 +66,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         println!("vods: {}", vods.len());
 
         if !vods.is_empty() {
-            db::twitch_vods::save_vods(&db_client, vods).await.ok();
+            save_vods(&db_client, vods).await.ok();
         }
     }
 

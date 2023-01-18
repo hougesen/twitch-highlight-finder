@@ -1,4 +1,6 @@
-use crate::{database::get_db_channels, twitch::authentication::authenticate_twitch};
+use database::{channels::get_channel_ids, get_db_client};
+
+use crate::twitch::authentication::authenticate_twitch;
 
 #[derive(serde::Serialize)]
 struct Condition {
@@ -50,7 +52,13 @@ impl TwitchEventSubBody {
 }
 
 pub async fn subscribe_to_channels() -> Result<(), Box<dyn std::error::Error>> {
-    let channels = get_db_channels().await;
+    let db_client = get_db_client(
+        &dotenv::var("MONGO_CONNECTION_URI").expect("Missing env MONGO_CONNECTION_URI"),
+    )
+    .await?
+    .database("highlights");
+
+    let channels = get_channel_ids(&db_client).await.unwrap_or_default();
 
     if !channels.is_empty() {
         let http_client = reqwest::ClientBuilder::new()

@@ -1,4 +1,4 @@
-use crate::db::TwitchEmote;
+use database::emotes::PartialTwitchEmote;
 
 #[derive(Debug, serde::Deserialize)]
 struct FrankerFaceZEmote {
@@ -11,7 +11,7 @@ struct FrankerFaceZResponse {
     emoticons: Vec<FrankerFaceZEmote>,
 }
 
-pub async fn fetch_emotes(page_count: u16) -> Vec<TwitchEmote> {
+pub async fn fetch_emotes(page_count: u16) -> Vec<PartialTwitchEmote> {
     let mut emotes = Vec::new();
 
     let http_client = reqwest::Client::new();
@@ -42,8 +42,8 @@ pub async fn fetch_emotes(page_count: u16) -> Vec<TwitchEmote> {
 }
 
 #[inline]
-fn transform_emote(emote: FrankerFaceZEmote) -> TwitchEmote {
-    TwitchEmote {
+fn transform_emote(emote: FrankerFaceZEmote) -> PartialTwitchEmote {
+    PartialTwitchEmote {
         emote_id: format!("frankerfacez-{}", emote.id),
         name: emote.name,
         channel_id: None,

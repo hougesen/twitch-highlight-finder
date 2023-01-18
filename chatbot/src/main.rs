@@ -4,12 +4,11 @@ use mongodb::bson::DateTime;
 use crate::{chat::chat_listener, twitch::eventsub::subscribe_to_channels};
 
 mod chat;
-mod database;
 mod queue;
 mod twitch;
 
 #[tokio::main]
-async fn main() -> Result<(), tungstenite::Error> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("Starting Twitch Chat Collector");
 
     subscribe_to_channels().await.unwrap();

@@ -1,15 +1,24 @@
+use database::{
+    clips::{get_pending_clip, save_clip_state, save_video_url},
+    get_db_client,
+};
+
 mod clipping;
-mod db;
 mod storage;
 
 const VIDEO_TIME_BUFFER: i64 = 10_000;
 
 #[tokio::main]
 async fn main() -> Result<(), mongodb::error::Error> {
-    let db_client = db::get_db_client().await?;
+    let db_client = get_db_client(
+        &dotenv::var("MONGO_CONNECTION_URI").expect("Missing env MONGO_CONNECTION_URI"),
+    )
+    .await?
+    .database("highlights");
+
     let s3_client = storage::setup_s3().await;
 
-    if let Some(clip) = db::clips::get_pending_clip(&db_client).await? {
+    if let Some(clip) = get_pending_clip(&db_client).await? {
         let clip_id_str = clip.id.to_string();
 
         let video_url = clipping::get_platform_url(&clip.vod_id);
@@ -26,7 +35,7 @@ async fn main() -> Result<(), mongodb::error::Error> {
                 let uploaded = storage::upload_video(&s3_client, &clip_id_str).await;
 
                 if uploaded.is_ok() {
-                    db::clips::save_video_url(
+                    save_video_url(
                         &db_client,
                         clip.id,
                         format!(
@@ -37,11 +46,11 @@ async fn main() -> Result<(), mongodb::error::Error> {
                     )
                     .await?;
                 } else {
-                    db::clips::save_clip_state(&db_client, clip.id, "upload-failed").await?;
+                    save_clip_state(&db_client, clip.id, "upload-failed").await?;
                 }
             }
         } else {
-            db::clips::save_clip_state(&db_client, clip.id, "download-failed").await?;
+            save_clip_state(&db_client, clip.id, "download-failed").await?;
         }
 
         clipping::remove_video(&clip_id_str).await.ok();
