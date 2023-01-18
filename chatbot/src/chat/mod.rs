@@ -1,8 +1,9 @@
 use async_channel::Sender;
 use mongodb::bson::DateTime;
+use queue::Queue;
 use tungstenite::{http::Uri, stream::MaybeTlsStream, Message, WebSocket};
 
-use crate::database::{get_channel_queue, get_db_client};
+use crate::queue::channel::{check_queue, Event};
 
 fn connect_to_twitch_wss(
 ) -> Result<WebSocket<MaybeTlsStream<std::net::TcpStream>>, tungstenite::Error> {
@@ -14,19 +15,41 @@ fn connect_to_twitch_wss(
     Ok(socket)
 }
 
+#[allow(unused_must_use)]
 pub async fn chat_listener(
     message_tx: Sender<(String, DateTime)>,
 ) -> Result<(), tungstenite::Error> {
-    let db_client = get_db_client().await.unwrap();
+    let mut event_queue = Queue::new(None).await;
 
-    let channel_queue = get_channel_queue(&db_client).await;
+    let create_queue_output = event_queue.create_queue("live-tracker").await;
+
+    event_queue.set_queue_url(create_queue_output.unwrap().queue_url().unwrap());
+
+    let mut joined_channels: std::collections::HashSet<String> = std::collections::HashSet::new();
 
     let mut socket = connect_to_twitch_wss()?;
 
-    join_channels(&mut socket, &channel_queue);
+    join_channels(
+        &mut socket,
+        &mut joined_channels,
+        check_queue(&event_queue).await,
+    );
+
     socket.write_pending()?;
 
+    let mut last_channel_queue_check = std::time::Instant::now();
+
     while !message_tx.is_closed() {
+        if last_channel_queue_check.elapsed().as_secs() > 30 {
+            join_channels(
+                &mut socket,
+                &mut joined_channels,
+                check_queue(&event_queue).await,
+            );
+
+            last_channel_queue_check = std::time::Instant::now()
+        }
+
         match socket.read_message() {
             Ok(message) => {
                 let timestamp = DateTime::now();
@@ -36,11 +59,10 @@ pub async fn chat_listener(
 
                     if message_text.contains("PING") {
                         println!("message contains ping");
-                        socket.write_message(Message::Text("PONG".to_string())).ok();
-                        socket.write_pending().ok();
+                        socket.write_message(Message::Text("PONG".to_string()));
+                        socket.write_pending();
                     } else {
-                        // NOTE: no reason to waste time checking if succesful
-                        message_tx.send((message_text, timestamp)).await.ok();
+                        message_tx.send((message_text, timestamp)).await;
                     }
                 }
             }
@@ -52,7 +74,12 @@ pub async fn chat_listener(
 
                     println!("Done reconnecting");
 
-                    join_channels(&mut socket, &channel_queue);
+                    join_channels(
+                        &mut socket,
+                        &mut joined_channels,
+                        check_queue(&event_queue).await,
+                    );
+
                     socket.write_pending()?;
                 }
                 // tungstenite::Error::AlreadyClosed => todo!(),
@@ -90,11 +117,35 @@ fn login_to_twitch(
     Ok(())
 }
 
+#[inline]
+fn construct_join_message(channel: &str) -> Message {
+    Message::Text(format!("JOIN #{}", channel.to_lowercase().trim()))
+}
+
+#[inline]
+fn construct_leave_message(channel: &str) -> Message {
+    Message::Text(format!("PART #{}", channel.to_lowercase().trim()))
+}
+
+#[allow(unused_must_use)]
 fn join_channels(
     socket: &mut WebSocket<MaybeTlsStream<std::net::TcpStream>>,
-    channels: &Vec<Message>,
+    joined_channels: &mut std::collections::HashSet<String>,
+    events: Vec<Event>,
 ) {
-    for channel in channels {
-        socket.write_message(channel.to_owned()).ok();
+    if events.is_empty() {
+        for channel in joined_channels.iter() {
+            socket.write_message(construct_join_message(channel));
+        }
+    }
+
+    for event in events {
+        if event.kind == "stream.online" {
+            socket.write_message(construct_join_message(&event.username));
+            joined_channels.insert(event.username);
+        } else {
+            joined_channels.remove(&event.username);
+            socket.write_message(construct_leave_message(&event.username));
+        }
     }
 }

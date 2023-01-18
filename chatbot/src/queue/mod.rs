@@ -1,20 +1,21 @@
 use async_channel::Receiver;
-use aws_sdk_sqs as sqs;
-use mongodb::bson::DateTime;
-use sqs::{
+use aws_sdk_sqs::{
     error::{CreateQueueError, SendMessageError},
     output::{CreateQueueOutput, SendMessageOutput},
     types::SdkError,
 };
+use mongodb::bson::DateTime;
 
-pub async fn setup_sqs_client() -> sqs::Client {
+pub mod channel;
+
+pub async fn setup_sqs_client() -> aws_sdk_sqs::Client {
     let config = aws_config::load_from_env().await;
 
-    sqs::Client::new(&config)
+    aws_sdk_sqs::Client::new(&config)
 }
 
 pub async fn create_queue(
-    sqs_client: &sqs::Client,
+    sqs_client: &aws_sdk_sqs::Client,
     queue_name: &str,
 ) -> Result<CreateQueueOutput, SdkError<CreateQueueError>> {
     sqs_client
@@ -48,7 +49,7 @@ pub async fn message_queuer(
 
             for message in trimmed_message.split("\r\n").collect::<Vec<&str>>() {
                 if message.contains("PRIVMSG") {
-                    queue_message(&sqs_client, queue_url, message.trim(), timestamp.clone())
+                    queue_message(&sqs_client, queue_url, message.trim(), timestamp)
                         .await
                         .ok();
                 } else {
