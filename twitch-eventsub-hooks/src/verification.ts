@@ -1,5 +1,6 @@
 import crypto from 'crypto';
 import { IncomingHttpHeaders } from 'http';
+
 import { TWITCH_MESSAGE_ID, TWITCH_MESSAGE_TIMESTAMP } from './config';
 
 export function getHmacMessage(headers: IncomingHttpHeaders, body?: string) {

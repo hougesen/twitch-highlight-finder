@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-export const MESSAGE_SECRET = process.env.MESSAGE_SECRET;
+export const { MESSAGE_SECRET } = process.env;
 
 if (!MESSAGE_SECRET) {
     throw new Error('Missing message secret');

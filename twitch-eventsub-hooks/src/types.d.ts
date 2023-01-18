@@ -29,7 +29,7 @@ export declare type TwitchNotificationStreamOnline = {
 export declare type TwitchNotificationStreamOffline = {
     subscription: {
         id: string;
-        status: string;
+        status: 'stream.offline';
         type: string;
         version: string;
         condition: {

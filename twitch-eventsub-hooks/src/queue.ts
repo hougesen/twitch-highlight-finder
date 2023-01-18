@@ -1,4 +1,4 @@
-import { SQSClient, CreateQueueCommand, SendMessageCommand } from '@aws-sdk/client-sqs';
+import { CreateQueueCommand, SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs';
 import { fromEnv } from '@aws-sdk/credential-providers';
 
 const SQS_CLIENT = new SQSClient({ credentials: fromEnv() });

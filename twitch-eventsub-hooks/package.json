@@ -19,7 +19,9 @@
     "scripts": {
         "build": "tsc",
         "start": "node dist/index.js",
-        "dev": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"tsc -w\" \"nodemon dist/index.js\""
+        "dev": "concurrently -k -p \"[{name}]\" -n \"TypeScript,Node\" -c \"cyan.bold,green.bold\" \"tsc -w\" \"nodemon dist/index.js\"",
+        "format": "prettier --ignore-path .gitignore --write .",
+        "lint": "eslint src/*.ts"
     },
     "devDependencies": {
         "@types/eslint": "^8.4.10",

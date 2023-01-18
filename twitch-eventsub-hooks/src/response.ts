@@ -1,10 +1,5 @@
 import { OutgoingHttpHeaders, ServerResponse } from 'http';
-import {
-    Request,
-    TwitchNotificationChallenge,
-    TwitchNotificationStreamOffline,
-    TwitchNotificationStreamOnline,
-} from './types';
+
 import {
     HMAC_PREFIX,
     MESSAGE_SECRET,
@@ -15,7 +10,13 @@ import {
     TWITCH_MESSAGE_SIGNATURE,
 } from './config';
 import { queueMessage } from './queue';
-import { getHmacMessage, getHmac, verifyMessage } from './verification';
+import {
+    Request,
+    TwitchNotificationChallenge,
+    TwitchNotificationStreamOffline,
+    TwitchNotificationStreamOnline,
+} from './types';
+import { getHmac, getHmacMessage, verifyMessage } from './verification';
 
 function sendResponse(res: ServerResponse, statusCode: number, headers?: OutgoingHttpHeaders, content?: string) {
     res.writeHead(statusCode, headers).end(content);
@@ -34,7 +35,7 @@ async function handleEvent(
             break;
 
         default:
-            console.log('Unknown subscription type', req.body?.subscription?.type);
+            console.info('Unknown subscription type', req.body?.subscription?.type);
             break;
     }
 }

@@ -1,7 +1,9 @@
 import 'dotenv/config';
+
 import http from 'http';
+
 import { handleRequest } from './response';
-import { TwitchNotification, Request } from './types';
+import { Request, TwitchNotification } from './types';
 
 function parseRequestBody(bodyStr: string): TwitchNotification | undefined {
     try {
@@ -12,9 +14,6 @@ function parseRequestBody(bodyStr: string): TwitchNotification | undefined {
 }
 
 async function handleIncomingRequest(req: Request, res: http.ServerResponse) {
-    //   const body = await readRequestBody(req);
-    console.log(req.method, req.headers, req.readable);
-
     const chunks: Uint8Array[] = [];
 
     req.on('data', (chunk: Uint8Array) => {
