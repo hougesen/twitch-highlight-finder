@@ -1,13 +1,11 @@
-use queue::Queue;
-
-use crate::db::{
+use database::{
     emotes::get_emote_scores,
     get_db_client,
-    messages::{save_message_batch, TwitchChatMessage},
+    twitch_messages::{save_messages, TwitchChatMessage},
 };
+use queue::Queue;
 
 mod analysis;
-mod db;
 mod parser;
 
 #[derive(Debug, serde::Deserialize)]
@@ -18,7 +16,10 @@ pub struct QueueMessage {
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let db_client = get_db_client().await.unwrap();
+    let db_client = get_db_client(
+        &dotenv::var("MONGO_CONNECTION_URI").expect("Missing env MONGO_CONNECTION_URI"),
+    )
+    .await?;
 
     let emote_scores = std::sync::Arc::new(
         get_emote_scores(&db_client.database("highlights"))
@@ -104,7 +105,7 @@ async fn job(
             break;
         }
 
-        save_message_batch(&database, finished_messages).await.ok();
+        save_messages(&database, finished_messages).await.ok();
     }
 
     Ok(())

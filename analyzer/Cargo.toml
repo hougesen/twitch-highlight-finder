@@ -5,13 +5,14 @@ edition = "2021"
 
 [dependencies]
 dashmap = "5.4.0"
+database = { path = "../lib/database" }
 dotenv = "0.15.0"
 futures = "0.3.25"
 mongodb = "2.3.1"
+queue = { path = "../lib/queue" }
 serde = { version = "1.0.152", features = ["derive"] }
 serde_json = "1.0.91"
-tokio = "1.23.0"
-queue = { path = "../lib/queue" }
+tokio = { version = "1.23.0", features = ["full"] }
 
 [[bin]]
 name = "bootstrap"

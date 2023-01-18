@@ -13,7 +13,7 @@ pub struct TwitchChatMessage {
     pub message_score: f64,
 }
 
-pub async fn save_message_batch(
+pub async fn save_messages(
     db_client: &mongodb::Database,
     messages: impl IntoIterator<Item = TwitchChatMessage>,
 ) -> Result<InsertManyResult, mongodb::error::Error> {
