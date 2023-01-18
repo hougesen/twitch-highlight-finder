@@ -24,14 +24,13 @@ dependencies = [
 
 [[package]]
 name = "analyzer"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
- "aws-config",
- "aws-sdk-sqs",
  "dashmap",
  "dotenv",
  "futures",
  "mongodb",
+ "queue",
  "serde",
  "serde_json",
  "tokio",
@@ -1297,6 +1296,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57a8eca9f9c4ffde41714334dee777596264c7825420f521abc92b5b5deb63a5"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "queue"
+version = "0.1.1"
+dependencies = [
+ "aws-config",
+ "aws-sdk-sqs",
+ "serde",
+ "serde_json",
+ "tokio",
 ]
 
 [[package]]

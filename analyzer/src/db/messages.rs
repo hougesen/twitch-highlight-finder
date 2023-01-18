@@ -28,7 +28,6 @@ pub async fn save_message_batch(
 }
 
 /// Have to make a unique compound index since SQS standard queues can have dupplications
-#[allow(dead_code)]
 pub async fn ensure_message_index_exists(
     db_client: &mongodb::Database,
 ) -> Result<CreateIndexResult, mongodb::error::Error> {

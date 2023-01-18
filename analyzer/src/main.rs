@@ -1,3 +1,5 @@
+use queue::Queue;
+
 use crate::db::{
     emotes::get_emote_scores,
     get_db_client,
@@ -7,7 +9,12 @@ use crate::db::{
 mod analysis;
 mod db;
 mod parser;
-mod queue;
+
+#[derive(Debug, serde::Deserialize)]
+pub struct QueueMessage {
+    pub message: String,
+    pub timestamp: mongodb::bson::DateTime,
+}
 
 #[tokio::main(flavor = "multi_thread")]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -53,7 +60,7 @@ async fn job(
 
     let database = db_client.database("highlights");
 
-    let mut queue = queue::Queue::new(None).await;
+    let mut queue = Queue::new(None).await;
 
     let created_queue = queue.create_queue("unparsed-messages").await.unwrap();
 
@@ -63,7 +70,10 @@ async fn job(
         let mut finished_messages: Vec<TwitchChatMessage> = Vec::with_capacity(10);
         let mut receipt_handles = Vec::with_capacity(10);
 
-        if let Ok(queue_messages) = queue.get_message_batch(Some(10)).await {
+        if let Ok(queue_messages) = queue
+            .get_message_batch::<QueueMessage>(Some(10), Some(false))
+            .await
+        {
             for (queue_message, message_handle) in queue_messages {
                 if let Some(parsed_message) =
                     parser::parse_message(&queue_message.message, queue_message.timestamp)
